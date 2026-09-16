@@ -64,7 +64,8 @@ def fetch_all_stations_weather(force_refresh: bool = False) -> List[Dict[str, An
         return list(_WEATHER_CACHE.values())
 
     # Load station coordinates
-    coord_file = 'e:/SREC/RailGo2/data/station_coordinates.csv'
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    coord_file = os.path.join(base_dir, 'data', 'station_coordinates.csv')
     stations_df = pd.read_csv(coord_file)
 
     lats = stations_df['latitude'].tolist()

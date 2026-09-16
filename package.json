@@ -1,0 +1,20 @@
+{
+  "name": "railgo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "RailGo — AI-Powered Dynamic Train ETA Forecasting & Railway Condition Monitoring System",
+  "scripts": {
+    "start": "uvicorn backend.main:app --host 0.0.0.0 --port 8000",
+    "dev": "uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload",
+    "train": "python -m ml.train_model"
+  },
+  "keywords": [
+    "railgo",
+    "train-tracking",
+    "eta-forecasting",
+    "fastapi",
+    "suburban-railway"
+  ],
+  "author": "RailGo Team",
+  "license": "MIT"
+}

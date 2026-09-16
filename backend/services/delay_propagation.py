@@ -23,7 +23,8 @@ def propagate_station_delays(
     Computes station-by-station ETA without simply copying delays.
     Propagates delay progressively with section-specific physics and recovery cushions.
     """
-    coord_file = 'e:/SREC/RailGo2/data/station_coordinates.csv'
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    coord_file = os.path.join(base_dir, 'data', 'station_coordinates.csv')
     stations_df = pd.read_csv(coord_file)
 
     # Reference base time

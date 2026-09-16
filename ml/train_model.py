@@ -16,8 +16,9 @@ from ml.preprocess import engineer_features, FEATURE_COLUMNS
 
 
 def train_railgo_model():
-    dataset_path = 'e:/SREC/RailGo2/data/training_dataset.csv'
-    model_output_path = 'e:/SREC/RailGo2/ml/railway_eta_model.pkl'
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dataset_path = os.path.join(base_dir, 'data', 'training_dataset.csv')
+    model_output_path = os.path.join(base_dir, 'ml', 'railway_eta_model.pkl')
 
     print(f"Loading training dataset from {dataset_path}...")
     df = pd.read_csv(dataset_path)

@@ -50,14 +50,15 @@ def load_initial_train_data():
     global _TRAINS_CACHE, _STATION_COORDINATES
 
     # 1. Load Station Coordinates
-    coord_path = 'e:/SREC/RailGo2/data/station_coordinates.csv'
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    coord_path = os.path.join(base_dir, 'data', 'station_coordinates.csv')
     stn_df = pd.read_csv(coord_path)
     _STATION_COORDINATES = stn_df.to_dict(orient='records')
     station_seq_map = {row['station_name'].lower(): int(row['sequence']) for _, row in stn_df.iterrows()}
     station_code_map = {row['station_code'].lower(): int(row['sequence']) for _, row in stn_df.iterrows()}
 
     # 2. Load Trains from Excel
-    excel_path = 'e:/SREC/RailGo2/data/MASS_to_TRL_All_Local_Trains.xlsx'
+    excel_path = os.path.join(base_dir, 'data', 'MASS_to_TRL_All_Local_Trains.xlsx')
     trains_df = pd.read_excel(excel_path, sheet_name='Train Schedule')
 
     for idx, row in trains_df.iterrows():
