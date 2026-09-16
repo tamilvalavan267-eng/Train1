@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailGo — AI-Powered Dynamic Train ETA & Railway Condition Intelligence</title>
+  <meta name="description" content="RailGo combines train schedules, live movements, signal aspects, railway engineering work, congestion, and live Open-Meteo weather to predict dynamic train ETAs with XGBoost AI.">
+  
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Navigation Sidebar -->
+  <aside class="sidebar">
+    <div class="brand-header">
+      <div class="brand-icon">
+        <i class="fa-solid fa-train-subway"></i>
+      </div>
+      <div>
+        <div class="brand-title">RailGo</div>
+        <div class="brand-tagline">Track Smart. Predict Early. Travel Better.</div>
+      </div>
+    </div>
+
+    <div class="nav-section-title">Operations & Monitoring</div>
+    <ul class="nav-list">
+      <li class="nav-item active" data-view="dashboard">
+        <i class="fa-solid fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </li>
+      <li class="nav-item" data-view="all-trains">
+        <i class="fa-solid fa-train"></i>
+        <span>All Train Details</span>
+        <span class="badge" id="badge-total-trains">61</span>
+      </li>
+      <li class="nav-item" data-view="train-details">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        <span>Train Details</span>
+      </li>
+      <li class="nav-item" data-view="station-eta">
+        <i class="fa-solid fa-clock"></i>
+        <span>Station-wise ETA</span>
+      </li>
+      <li class="nav-item" data-view="railway-map">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>Railway Map</span>
+      </li>
+    </ul>
+
+    <div class="nav-section-title">AI & Conditions</div>
+    <ul class="nav-list">
+      <li class="nav-item" data-view="ai-prediction">
+        <i class="fa-solid fa-robot"></i>
+        <span>AI Prediction</span>
+      </li>
+      <li class="nav-item" data-view="signal-conditions">
+        <i class="fa-solid fa-traffic-light"></i>
+        <span>Signal & Conditions</span>
+        <span class="badge" id="badge-signal-issues" style="background:#F57F17;">3</span>
+      </li>
+      <li class="nav-item" data-view="construction">
+        <i class="fa-solid fa-person-digging"></i>
+        <span>Construction & TSR</span>
+        <span class="badge" id="badge-construction" style="background:#E65100;">2</span>
+      </li>
+      <li class="nav-item" data-view="weather-grid">
+        <i class="fa-solid fa-cloud-sun-rain"></i>
+        <span>All Stations Weather</span>
+      </li>
+    </ul>
+
+    <div class="nav-section-title">Intelligence & Views</div>
+    <ul class="nav-list">
+      <li class="nav-item" data-view="simulation">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>Scenario Simulation</span>
+      </li>
+      <li class="nav-item" data-view="alerts">
+        <i class="fa-solid fa-bell"></i>
+        <span>Alerts</span>
+        <span class="badge" id="badge-alerts" style="background:#C62828;">4</span>
+      </li>
+      <li class="nav-item" data-view="passenger-view">
+        <i class="fa-solid fa-user-check"></i>
+        <span>Passenger View</span>
+      </li>
+      <li class="nav-item" data-view="control-room">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Control Room</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        <span>XGBoost AI Core Active</span>
+      </div>
+      <div style="color: #90CAF9; font-size: 11px;">
+        Corridor: MASS → TRL (21 Stns)
+      </div>
+      <div style="color: #BBDEFB; font-size: 10px; margin-top: 4px;" id="sidebar-updated-time">
+        Connecting WebSocket...
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main View Container -->
+  <div class="main-wrapper">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="view-title" id="current-view-heading">
+          <i class="fa-solid fa-gauge-high" style="color: var(--primary-blue);"></i>
+          <span>Corridor Operations Dashboard</span>
+        </h1>
+        <div class="corridor-badge">
+          <i class="fa-solid fa-route"></i>
+          <span>Chennai Central (MASS) ↔ Tiruvallur (TRL) • 41.8 km</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-indicator">
+          <div class="status-dot"></div>
+          <span id="live-data-badge">LIVE WEATHER & AI ACTIVE</span>
+        </div>
+        <button class="btn btn-outline" id="btn-refresh-all" title="Refresh Live Open-Meteo & Timetable Data">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Refresh</span>
+        </button>
+        <button class="btn btn-primary" onclick="switchView('simulation')">
+          <i class="fa-solid fa-bolt"></i>
+          <span>What-If Simulator</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+
+      <!-- ======================================================= -->
+      <!-- VIEW 1: DASHBOARD -->
+      <!-- ======================================================= -->
+      <section class="view-panel active" id="view-dashboard">
+        <!-- 10 Primary KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card" onclick="switchView('all-trains')">
+            <div class="kpi-header">
+              <span>TOTAL MONITORED</span>
+              <i class="fa-solid fa-train"></i>
+            </div>
+            <div class="kpi-value" id="kpi-total-trains">61 <small>Trains</small></div>
+            <div class="kpi-subtext"><i class="fa-regular fa-clock"></i> Timetable Active</div>
+          </div>
+
+          <div class="kpi-card green" onclick="filterTrainsByStatus('On Time')">
+            <div class="kpi-header">
+              <span>ON-TIME TRAINS</span>
+              <i class="fa-solid fa-circle-check" style="color: var(--status-green);"></i>
+            </div>
+            <div class="kpi-value" style="color: var(--status-green);" id="kpi-ontime-trains">37</div>
+            <div class="kpi-subtext">Nominal schedule adherence</div>
+          </div>
+
+          <div class="kpi-card yellow" onclick="filterTrainsByStatus('Delayed')">
+            <div class="kpi-header">
+              <span>DELAYED TRAINS</span>
+              <i class="fa-solid fa-triangle-exclamation" style="color: var(--status-yellow);"></i>
+            </div>
+            <div class="kpi-value" style="color: #F57F17;" id="kpi-delayed-trains">24</div>
+            <div class="kpi-subtext">Subject to section conditions</div>
+          </div>
+
+          <div class="kpi-card red" onclick="filterTrainsByRisk('HIGH')">
+            <div class="kpi-header">
+              <span>HIGH-RISK TRAINS</span>
+              <i class="fa-solid fa-circle-exclamation" style="color: var(--status-red);"></i>
+            </div>
+            <div class="kpi-value" style="color: var(--status-red);" id="kpi-high-risk">6</div>
+            <div class="kpi-subtext">Escalating delay &gt; 12m</div>
+          </div>
+
+          <div class="kpi-card orange" onclick="switchView('signal-conditions')">
+            <div class="kpi-header">
+              <span>SIGNAL ISSUES</span>
+              <i class="fa-solid fa-traffic-light" style="color: var(--status-orange);"></i>
+            </div>
+            <div class="kpi-value" id="kpi-signal-issues">3 <small>Blocks</small></div>
+            <div class="kpi-subtext">Waiting &gt; 2 min / Restricted</div>
+          </div>
+
+          <div class="kpi-card" onclick="switchView('construction')">
+            <div class="kpi-header">
+              <span>CONSTRUCTION & TSR</span>
+              <i class="fa-solid fa-person-digging" style="color: var(--primary-blue);"></i>
+            </div>
+            <div class="kpi-value" id="kpi-construction-active">2 <small>Active</small></div>
+            <div class="kpi-subtext">Speed restrictions enforced</div>
+          </div>
+
+          <div class="kpi-card green" onclick="switchView('weather-grid')">
+            <div class="kpi-header">
+              <span>WEATHER STATUS</span>
+              <i class="fa-solid fa-cloud-sun" style="color: var(--status-green);"></i>
+            </div>
+            <div class="kpi-value" id="kpi-weather-summary">32°C <small>Fair</small></div>
+            <div class="kpi-subtext">All 21 stations live Open-Meteo</div>
+          </div>
+
+          <div class="kpi-card" onclick="switchView('ai-prediction')">
+            <div class="kpi-header">
+              <span>AI PREDICTIONS</span>
+              <i class="fa-solid fa-microchip" style="color: var(--primary-blue);"></i>
+            </div>
+            <div class="kpi-value" id="kpi-ai-predictions">61 <small>Active</small></div>
+            <div class="kpi-subtext">XGBoost Regressor (MAE 0.9m)</div>
+          </div>
+
+          <div class="kpi-card yellow">
+            <div class="kpi-header">
+              <span>AVERAGE DELAY</span>
+              <i class="fa-solid fa-stopwatch" style="color: var(--status-yellow);"></i>
+            </div>
+            <div class="kpi-value" id="kpi-avg-delay">3.8 <small>min</small></div>
+            <div class="kpi-subtext">Across corridor EMU locals</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span>LAST UPDATED</span>
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </div>
+            <div class="kpi-value" style="font-size: 18px;" id="kpi-last-updated">Just Now</div>
+            <div class="kpi-subtext">Continuous telemetry sync</div>
+          </div>
+        </div>
+
+        <!-- Full Train Scheduling Time & AI Dynamic ETA Board -->
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-calendar-days" style="color: var(--primary-blue);"></i>
+              <span>Corridor Train Timetable & Scheduling Times (Chennai Central → Tiruvallur)</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="badge-tag badge-live" id="dashboard-schedule-count">61 SCHEDULED TRAINS</span>
+              <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="switchView('all-trains')">
+                Full Train Register <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Schedule Time Filter Bar -->
+          <div class="filter-bar" style="margin-bottom: 14px;">
+            <input type="text" class="search-input" id="search-dashboard-schedule" placeholder="Search train schedule by Train No, Name, or Current Station..." style="max-width: 320px;">
+            
+            <select class="select-filter" id="filter-dashboard-time-window">
+              <option value="ALL">🕒 All Scheduling Windows (Full Day)</option>
+              <option value="MORNING">🌅 Morning Peak (03:50 - 10:00)</option>
+              <option value="MIDDAY">☀️ Midday Services (10:00 - 16:00)</option>
+              <option value="EVENING">🌆 Evening Peak (16:00 - 21:00)</option>
+              <option value="NIGHT">🌙 Night Services (21:00 - 23:55)</option>
+            </select>
+
+            <select class="select-filter" id="filter-dashboard-status">
+              <option value="ALL">All Timetable Statuses</option>
+              <option value="On Time">On-Time Schedules</option>
+              <option value="Delayed">Delayed Schedules</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="dashboard-trains-table">
+              <thead>
+                <tr>
+                  <th>Train Number & Name</th>
+                  <th><i class="fa-regular fa-clock"></i> Sched Dep (MASS)</th>
+                  <th><i class="fa-solid fa-flag-checkered"></i> Sched Arr (TRL)</th>
+                  <th>Journey Time</th>
+                  <th>Current Position</th>
+                  <th>Schedule Status</th>
+                  <th><i class="fa-solid fa-robot"></i> AI Dynamic ETA</th>
+                  <th>Add'l Delay</th>
+                  <th>Risk</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-trains-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Operational Status & Weather Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-traffic-light"></i>
+                <span>Active Track & Signal Telemetry Status</span>
+              </div>
+              <span class="badge-tag badge-live">OPERATIONAL</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px;">
+              <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: #F8FAFC; border-radius: 6px;">
+                <span><strong>Villivakkam - Korattur:</strong> TSR 20 km/h</span>
+                <span class="badge-tag badge-medium">Track Renewal</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: #F8FAFC; border-radius: 6px;">
+                <span><strong>Thiruninravur - Veppampattu:</strong> Restricted</span>
+                <span class="badge-tag badge-high">Wait 9.5m</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: #F8FAFC; border-radius: 6px;">
+                <span><strong>Veppampattu - Sevvapet:</strong> Bridge TSR 15</span>
+                <span class="badge-tag badge-high">Major Restriction</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-cloud-sun"></i>
+                <span>Corridor Route Weather Outlook</span>
+              </div>
+              <span class="badge-tag badge-live">OPEN-METEO API</span>
+            </div>
+            <div id="quick-weather-strip" style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 2: ALL TRAIN DETAILS -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-all-trains">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-table-list"></i>
+              <span>All Monitored Trains (Timetable + Dynamic AI ETA)</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge-tag badge-live">🟢 LIVE SCHEDULE</span>
+              <span class="badge-tag badge-live">🤖 XGBOOST FORECAST</span>
+            </div>
+          </div>
+
+          <!-- Filter & Search Controls -->
+          <div class="filter-bar">
+            <input type="text" class="search-input" id="search-all-trains" placeholder="Search by Train No, Name, Station, or Delay Reason...">
+            
+            <select class="select-filter" id="filter-status-select">
+              <option value="ALL">All Running Statuses</option>
+              <option value="On Time">On Time</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+
+            <select class="select-filter" id="filter-risk-select">
+              <option value="ALL">All Risk Levels</option>
+              <option value="LOW">Low Risk</option>
+              <option value="MEDIUM">Medium Risk</option>
+              <option value="HIGH">High Risk</option>
+            </select>
+
+            <select class="select-filter" id="filter-type-select">
+              <option value="ALL">All Train Types</option>
+              <option value="EMU Local">EMU Local</option>
+              <option value="MEMU">MEMU</option>
+              <option value="Fast Local">Fast Local</option>
+            </select>
+
+            <button class="btn btn-outline" id="btn-reset-filters">
+              <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="all-trains-table">
+              <thead>
+                <tr>
+                  <th>Train No</th>
+                  <th>Train Name</th>
+                  <th>Type</th>
+                  <th>Current Station</th>
+                  <th>Next Station</th>
+                  <th>Sched Dep</th>
+                  <th>Sched Arr</th>
+                  <th>Cur Delay</th>
+                  <th>Speed</th>
+                  <th>Signal Status</th>
+                  <th>TSR / Work</th>
+                  <th>AI Predicted ETA</th>
+                  <th>Add'l Delay</th>
+                  <th>Risk</th>
+                  <th>Range</th>
+                  <th>Weather</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="all-trains-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 3: INDIVIDUAL TRAIN DETAILS -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-train-details">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-train"></i>
+              <span id="detail-train-title">Train Inspector: Select a Train</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <label for="detail-train-selector" style="font-size: 13px; font-weight: 600;">Switch Train:</label>
+              <select class="select-filter" id="detail-train-selector" style="width: 250px;">
+                <!-- Injected via JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Train Metadata Grid -->
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
+            <div class="kpi-card">
+              <div class="kpi-header">RUNNING STATUS</div>
+              <div class="kpi-value" id="detail-status" style="font-size: 20px;">On Time</div>
+              <div class="kpi-subtext" id="detail-delay-reason">Clear corridor</div>
+            </div>
+            <div class="kpi-card green">
+              <div class="kpi-header">CURRENT SPEED</div>
+              <div class="kpi-value" id="detail-speed">45 <small>km/h</small></div>
+              <div class="kpi-subtext">Telemetry verified</div>
+            </div>
+            <div class="kpi-card yellow">
+              <div class="kpi-header">CURRENT DELAY</div>
+              <div class="kpi-value" id="detail-current-delay">0 <small>min</small></div>
+              <div class="kpi-subtext">Inherent route delay</div>
+            </div>
+            <div class="kpi-card red">
+              <div class="kpi-header">AI PREDICTED DELAY</div>
+              <div class="kpi-value" id="detail-pred-delay">+0 <small>min</small></div>
+              <div class="kpi-subtext" id="detail-pred-range">Range: +0 to +0 min</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">DYNAMIC AI ETA</div>
+              <div class="kpi-value" style="color: var(--primary-blue);" id="detail-ai-eta">--:--:--</div>
+              <div class="kpi-subtext" id="detail-sched-arr">Scheduled: --:--:--</div>
+            </div>
+          </div>
+
+          <!-- Route & Multi-Factor Conditions Breakdown -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-traffic-light"></i> Railway Operational Conditions</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                <div><strong>Signal Section:</strong> <span id="detail-sig-status">--</span></div>
+                <div><strong>Signal Wait:</strong> <span id="detail-sig-wait">--</span></div>
+                <div><strong>Construction / TSR:</strong> <span id="detail-cons-status">--</span></div>
+                <div><strong>Speed Restriction:</strong> <span id="detail-tsr">--</span></div>
+                <div><strong>Section Congestion:</strong> <span id="detail-congestion">--</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-cloud"></i> Route Station Weather</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                <div><strong>Current Station Weather:</strong> <span id="detail-weather-desc">--</span></div>
+                <div><strong>Temperature / Rain:</strong> <span id="detail-weather-temp">--</span></div>
+                <div><strong>Wind / Gusts:</strong> <span id="detail-weather-wind">--</span></div>
+                <div><strong>Visibility:</strong> <span id="detail-weather-vis">--</span></div>
+                <div><strong>Weather Impact on Train:</strong> <span id="detail-weather-impact">--</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Explanation for this train -->
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-brain"></i> XGBoost Factor Attribution — "Why this ETA?"</div>
+              <span class="badge-tag badge-live">SHAP-ALIGNED WEIGHTS</span>
+            </div>
+            <div class="ai-explanation-grid" id="detail-ai-explanations">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 4: STATION-WISE ETA -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-station-eta">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-clock"></i>
+              <span>Station-wise Dynamic Arrival Progression</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <label for="station-eta-train-selector" style="font-size: 13px; font-weight: 600;">Select Train:</label>
+              <select class="select-filter" id="station-eta-train-selector" style="width: 250px;">
+                <!-- Injected via JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="station-eta-table">
+              <thead>
+                <tr>
+                  <th>Seq</th>
+                  <th>Station Name</th>
+                  <th>Code</th>
+                  <th>Dist (km)</th>
+                  <th>Scheduled ETA</th>
+                  <th>AI Predicted ETA</th>
+                  <th>Add'l Delay</th>
+                  <th>Section Conditions</th>
+                  <th>Risk Level</th>
+                  <th>Platform</th>
+                </tr>
+              </thead>
+              <tbody id="station-eta-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 5: RAILWAY MAP -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-railway-map">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-map-location-dot"></i>
+              <span>Interactive Railway Map: Chennai Central to Tiruvallur</span>
+            </div>
+            <div style="display: flex; gap: 12px; font-size: 12px; align-items: center;">
+              <span><span style="color:#2E7D32;">●</span> Station</span>
+              <span><span style="color:#1565C0;">■</span> Train Location</span>
+              <span><span style="color:#E65100;">▲</span> Engineering Work</span>
+              <span><span style="color:#C62828;">◆</span> Signal Restriction</span>
+            </div>
+          </div>
+          <div id="railway-leaflet-map" class="map-container"></div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 6: AI PREDICTION ENGINE -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-ai-prediction">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-robot"></i>
+              <span>XGBoost Delay Forecasting & Model Diagnostics</span>
+            </div>
+            <span class="badge-tag badge-live">MODEL: XGBOOST REGRESSOR (HIST)</span>
+          </div>
+
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+            <div class="kpi-card green">
+              <div class="kpi-header">MEAN ABSOLUTE ERROR</div>
+              <div class="kpi-value">0.90 <small>min</small></div>
+              <div class="kpi-subtext">Evaluation on independent test set</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">ROOT MEAN SQUARED ERROR</div>
+              <div class="kpi-value">1.14 <small>min</small></div>
+              <div class="kpi-subtext">Low variance on outlier conditions</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">R² EXPLAINED VARIANCE</div>
+              <div class="kpi-value">0.9692</div>
+              <div class="kpi-subtext">96.9% delay variance captured</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">INFERENCE LATENCY</div>
+              <div class="kpi-value">&lt; 15 <small>ms</small></div>
+              <div class="kpi-subtext">Real-time sub-second ETA updates</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-list-check"></i> Primary XGBoost Feature Weights</div>
+                <span class="badge-tag badge-live">HIST TREE GAIN</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12.5px;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Block Status (Occupied/Restricted):</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">46.85%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:var(--primary-blue); width:46.85%; height:100%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Section Caution Restriction:</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">29.36%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:var(--primary-blue); width:29.36%; height:100%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Signal Aspect Status:</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">19.08%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:var(--primary-blue); width:19.08%; height:100%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Weather & Speed Restriction Risk:</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">1.47%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:#F57F17; width:8%; height:100%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Engineering Block Ahead (TSR):</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">0.91%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:#F57F17; width:6%; height:100%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 3px;">
+                    <span><strong>Signal Waiting Duration (minutes):</strong></span>
+                    <span style="font-weight:700; color:var(--primary-blue);">0.65%</span>
+                  </div>
+                  <div style="background:#E2E8F0; border-radius:4px; height:8px; overflow:hidden;">
+                    <div style="background:#2E7D32; width:5%; height:100%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-lightbulb"></i> Prediction Architecture</div>
+              </div>
+              <div style="font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+                <p><strong>Target Variable:</strong> <code>actual_additional_delay_minutes</code></p>
+                <p style="margin-top: 8px;"><strong>Dynamic Formulation:</strong></p>
+                <div style="background: #F1F5F9; padding: 10px 14px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; margin: 8px 0;">
+                  Updated ETA = Scheduled Time + Current Delay + XGBoost_Additional_Delay(Signals, TSR, Congestion, Weather)
+                </div>
+                <p>Combines multi-factor non-linear coupling: signal aspects, track renewal TSRs, preceding EMU spacing, and Open-Meteo precipitation/wind gusts.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 7: SIGNAL & RAILWAY CONDITIONS -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-signal-conditions">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-traffic-light"></i>
+              <span>Corridor Block Section Signal Conditions</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <span class="badge-tag badge-live">🟢 OPERATIONAL TELEMETRY</span>
+              <span class="badge-tag badge-unavailable">⚪ STRICT DATA INTEGRITY</span>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="signal-conditions-table">
+              <thead>
+                <tr>
+                  <th>Block Section</th>
+                  <th>Signal Status</th>
+                  <th>Signal Wait Time</th>
+                  <th>Block Occupancy</th>
+                  <th>Track Occupancy</th>
+                  <th>Preceding Train</th>
+                  <th>Telemetry Source</th>
+                  <th>Operational Note</th>
+                </tr>
+              </thead>
+              <tbody id="signal-conditions-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 8: CONSTRUCTION & MAINTENANCE -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-construction">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-person-digging"></i>
+              <span>Authorised Railway Construction & Engineering Blocks</span>
+            </div>
+            <span class="badge-tag badge-live">SOUTHERN RAILWAY ENGINEERING DIVISION</span>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="construction-table">
+              <thead>
+                <tr>
+                  <th>Work ID</th>
+                  <th>Section Location</th>
+                  <th>Engineering Work Type</th>
+                  <th>Status</th>
+                  <th>Enforced TSR</th>
+                  <th>Working Window</th>
+                  <th>Affected Trains</th>
+                  <th>Expected Delay Impact</th>
+                  <th>Controlling Authority</th>
+                </tr>
+              </thead>
+              <tbody id="construction-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 9: ALL STATIONS WEATHER -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-weather-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-cloud-sun-rain"></i>
+              <span>Live Open-Meteo Weather for All 21 Corridor Stations</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge-tag badge-live">LIVE OPEN-METEO API</span>
+              <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="loadWeather(true)">
+                <i class="fa-solid fa-arrows-rotate"></i> Force Fetch
+              </button>
+            </div>
+          </div>
+
+          <!-- Weather Search and Filters -->
+          <div class="filter-bar">
+            <input type="text" class="search-input" id="search-weather" placeholder="Search station name...">
+            <select class="select-filter" id="filter-weather-impact">
+              <option value="ALL">All Weather Impacts</option>
+              <option value="LOW">Low Impact</option>
+              <option value="MEDIUM">Medium Impact</option>
+              <option value="HIGH">High Impact</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="weather-table">
+              <thead>
+                <tr>
+                  <th>Seq</th>
+                  <th>Station Name</th>
+                  <th>Code</th>
+                  <th>Temp (°C)</th>
+                  <th>Humidity (%)</th>
+                  <th>Rain (mm)</th>
+                  <th>Precipitation</th>
+                  <th>Wind (km/h)</th>
+                  <th>Gusts (km/h)</th>
+                  <th>Weather Condition</th>
+                  <th>Visibility (m)</th>
+                  <th>Impact</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="weather-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ======================================================= -->
+      <!-- VIEW 11: SCENARIO SIMULATION -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-simulation">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>"What-If" Railway Scenario Simulation</span>
+            </div>
+            <span class="badge-tag badge-simulated">🟠 SIMULATED SCENARIO — PROTOTYPE ONLY</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
+            <!-- Simulation Controls -->
+            <div class="card" style="margin-bottom: 0; background: #F8FAFC;">
+              <div class="card-title" style="margin-bottom: 16px; font-size: 14px;">Adjust Operational Parameters</div>
+              
+              <div class="sim-grid">
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Select Train:</span>
+                  </div>
+                  <select class="select-filter" id="sim-train-select">
+                    <!-- Injected via JavaScript -->
+                  </select>
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Signal Waiting Time:</span>
+                    <strong id="sim-val-sig-wait">8 min</strong>
+                  </div>
+                  <input type="range" class="sim-slider" id="sim-slider-sig-wait" min="0" max="30" value="8" step="1">
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Signal Aspect:</span>
+                  </div>
+                  <select class="select-filter" id="sim-signal-aspect">
+                    <option value="Normal">🟢 Normal (Clear)</option>
+                    <option value="Warning" selected>🟡 Warning (Caution)</option>
+                    <option value="Critical">🔴 Critical (Restricted)</option>
+                  </select>
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Construction Block Active:</span>
+                    <input type="checkbox" id="sim-check-construction" checked style="width: 18px; height: 18px;">
+                  </div>
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Speed Restriction (TSR):</span>
+                    <strong id="sim-val-tsr">20 km/h</strong>
+                  </div>
+                  <input type="range" class="sim-slider" id="sim-slider-tsr" min="10" max="60" value="20" step="5">
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Corridor Congestion:</span>
+                    <strong id="sim-val-congestion">75%</strong>
+                  </div>
+                  <input type="range" class="sim-slider" id="sim-slider-congestion" min="10" max="100" value="75" step="5">
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Simulated Rainfall:</span>
+                    <strong id="sim-val-rain">15 mm</strong>
+                  </div>
+                  <input type="range" class="sim-slider" id="sim-slider-rain" min="0" max="50" value="15" step="1">
+                </div>
+
+                <div class="sim-control-group">
+                  <div class="sim-label">
+                    <span>Wind Gusts:</span>
+                    <strong id="sim-val-wind">42 km/h</strong>
+                  </div>
+                  <input type="range" class="sim-slider" id="sim-slider-wind" min="5" max="80" value="42" step="1">
+                </div>
+              </div>
+
+              <div style="margin-top: 20px;">
+                <button class="btn btn-primary" id="btn-run-simulation" style="width: 100%; justify-content: center; padding: 12px;">
+                  <i class="fa-solid fa-play"></i> Run XGBoost Simulation
+                </button>
+              </div>
+            </div>
+
+            <!-- Simulation Results Outcome -->
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <div class="card-title">Simulated Forecast Outcome</div>
+                <span class="badge-tag badge-simulated" id="sim-result-tag">SIMULATED SCENARIO</span>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="background: #F1F5F9; padding: 16px; border-radius: 8px;">
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">CURRENT ETA → SIMULATED ETA</div>
+                  <div style="display: flex; align-items: baseline; gap: 12px;">
+                    <span style="font-size: 20px; text-decoration: line-through; color: var(--text-muted);" id="sim-orig-eta">--:--:--</span>
+                    <i class="fa-solid fa-arrow-right" style="color: var(--primary-blue);"></i>
+                    <span style="font-size: 32px; font-weight: 800; color: var(--status-red); font-family: 'JetBrains Mono', monospace;" id="sim-result-eta">--:--:--</span>
+                  </div>
+                </div>
+
+                <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
+                  <div class="kpi-card yellow">
+                    <div class="kpi-header">ADDITIONAL DELAY</div>
+                    <div class="kpi-value" id="sim-add-delay">+-- min</div>
+                  </div>
+                  <div class="kpi-card red">
+                    <div class="kpi-header">RISK CATEGORY</div>
+                    <div class="kpi-value" id="sim-risk-level">--</div>
+                  </div>
+                </div>
+
+                <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary);" id="sim-impact-summary">
+                  Select parameters and click "Run XGBoost Simulation" to forecast the impact of compounding operational disruptions.
+                </div>
+
+                <div class="card-title" style="font-size: 13px; margin-top: 8px;">Factor Impact Attributions</div>
+                <div class="ai-explanation-grid" id="sim-explanation-container">
+                  <!-- Injected via JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 12: ALERTS -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-alerts">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-bell"></i>
+              <span>Active Real-Time Corridor Alerts</span>
+            </div>
+            <button class="btn btn-outline" onclick="loadAlerts()">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh Alerts
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;" id="alerts-list-container">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 13: PASSENGER VIEW -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-passenger-view">
+        <div class="passenger-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #BBDEFB;">
+              PASSENGER JOURNEY INTELLIGENCE
+            </div>
+            <select class="select-filter" id="passenger-train-selector" style="background: rgba(255,255,255,0.9); color: var(--dark-blue); font-weight: 700; width: 260px;">
+              <!-- Injected via JavaScript -->
+            </select>
+          </div>
+
+          <div style="font-size: 24px; font-weight: 800;" id="passenger-train-name">--</div>
+          <div style="font-size: 14px; color: #E3F2FD; margin-top: 4px;" id="passenger-route">Chennai Central (MASS) → Tiruvallur (TRL)</div>
+
+          <div style="display: flex; align-items: baseline; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Estimated Arrival (AI ETA)</div>
+              <div class="passenger-eta-hero" id="passenger-ai-eta">--:--</div>
+            </div>
+            <div style="border-left: 2px solid rgba(255,255,255,0.2); padding-left: 20px;">
+              <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Current Delay</div>
+              <div style="font-size: 28px; font-weight: 700;" id="passenger-delay">+0 min</div>
+            </div>
+            <div style="border-left: 2px solid rgba(255,255,255,0.2); padding-left: 20px;">
+              <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Next Station</div>
+              <div style="font-size: 24px; font-weight: 700;" id="passenger-next-stop">--</div>
+            </div>
+            <div style="border-left: 2px solid rgba(255,255,255,0.2); padding-left: 20px;">
+              <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Expected Platform</div>
+              <div style="font-size: 24px; font-weight: 700;" id="passenger-platform">Platform 2</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-list-ol"></i> Upcoming Stop Sequence & Passenger Times</div>
+            </div>
+            <div class="table-container">
+              <table class="data-table" id="passenger-schedule-table">
+                <thead>
+                  <tr>
+                    <th>Stop</th>
+                    <th>Station Name</th>
+                    <th>Scheduled</th>
+                    <th>Predicted Arrival</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="passenger-schedule-tbody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-bell"></i> Travel Advisories</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;" id="passenger-advisories">
+              <div style="padding: 12px; background: #F8FAFC; border-radius: 6px; border-left: 4px solid var(--primary-blue);">
+                <strong>Engineering Caution:</strong> Track renewal work in progress between Villivakkam and Korattur. Train speed is regulated for safety.
+              </div>
+              <div style="padding: 12px; background: #F8FAFC; border-radius: 6px; border-left: 4px solid var(--status-green);">
+                <strong>Weather Advisory:</strong> Weather is clear along the suburban corridor. No weather-related delays anticipated.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW 14: CONTROL ROOM -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-control-room">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Railway Controller High-Density Overview</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <span class="badge-tag badge-live">SECTION DISPATCHER HUD</span>
+              <span class="badge-tag badge-live">REAL-TIME TELEMETRY</span>
+            </div>
+          </div>
+
+          <div class="control-room-grid">
+            <div>
+              <div class="card-title" style="margin-bottom: 12px; font-size: 14px;">
+                <i class="fa-solid fa-traffic-light"></i> Interlocking Signal Blocks Status
+              </div>
+              <div class="table-container" style="max-height: 340px; overflow-y: auto;">
+                <table class="data-table" id="cr-signals-table">
+                  <thead>
+                    <tr>
+                      <th>Section</th>
+                      <th>Aspect</th>
+                      <th>Wait (m)</th>
+                      <th>Block Status</th>
+                      <th>Occupancy</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cr-signals-tbody">
+                    <!-- Injected via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="card-title" style="margin: 20px 0 12px; font-size: 14px;">
+                <i class="fa-solid fa-person-digging"></i> Active Engineering Blocks & Speed Restrictions
+              </div>
+              <div class="table-container">
+                <table class="data-table" id="cr-cons-table">
+                  <thead>
+                    <tr>
+                      <th>Section</th>
+                      <th>Work Type</th>
+                      <th>Status</th>
+                      <th>TSR</th>
+                      <th>Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cr-cons-tbody">
+                    <!-- Injected via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Controller Side Diagnostics -->
+            <div>
+              <div class="card-title" style="margin-bottom: 12px; font-size: 14px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Critical Train Bottlenecks
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;" id="cr-critical-trains-list">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Scripts: Leaflet, RailGo Application -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/script.js"></script>
+</body>
+</html>
