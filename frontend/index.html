@@ -15,8 +15,461 @@
   
   <!-- Custom Styling -->
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/mobile.css">
 </head>
 <body>
+
+  <!-- Top Switcher Bar for Desktop Browsers -->
+  <div class="view-switcher-bar">
+    <div class="switcher-pills">
+      <button class="switch-pill-btn active" id="btn-view-mobile-app">
+        <i class="fa-solid fa-mobile-screen-button"></i> Mobile App
+      </button>
+      <button class="switch-pill-btn" id="btn-view-desktop-console">
+        <i class="fa-solid fa-desktop"></i> Operations Console
+      </button>
+    </div>
+    <div class="live-badge-mini">
+      <span class="live-pulse-dot"></span> LIVE TELEMETRY
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MOBILE COMMUTER APPLICATION CONTAINER -->
+  <!-- ============================================================== -->
+  <div class="mobile-app-wrapper" id="mobile-app-wrapper">
+    <div class="mobile-device-container">
+
+      <!-- Header -->
+      <header class="m-header">
+        <div class="m-header-left">
+          <div class="m-app-logo">R</div>
+          <div class="m-app-meta">
+            <div class="m-app-title-row">
+              <span class="m-app-name">RailGo</span>
+              <span class="m-demo-badge">Simulated Demo Data</span>
+            </div>
+            <span class="m-app-sub">Chennai Suburban EMU</span>
+          </div>
+        </div>
+        <div class="m-header-right">
+          <button class="m-icon-btn" id="mobile-btn-bell" title="Notifications & Advisories">
+            <i class="fa-solid fa-bell" style="color: #F59E0B;"></i>
+            <span class="m-notif-dot"></span>
+          </button>
+          <div class="m-user-avatar" id="mobile-btn-avatar" title="User Profile">A</div>
+        </div>
+      </header>
+
+      <!-- Main Mobile Content Area -->
+      <main class="m-main-content">
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: HOME (Default View Matching Screenshot) -->
+        <!-- ============================================== -->
+        <div class="m-subview active" id="m-subview-home">
+          <h1 class="m-section-headline">Home</h1>
+
+          <!-- Suburban Commute Card -->
+          <div class="commute-card">
+            <div class="commute-card-eyebrow">SUBURBAN COMMUTE</div>
+            <div class="commute-card-title">Where are you going?</div>
+
+            <!-- Route Picker Box -->
+            <div class="route-picker-box">
+              <!-- Origin Station -->
+              <div class="station-input-row" id="origin-station-box">
+                <div class="station-input-left">
+                  <div class="route-dot blue-solid"></div>
+                  <div class="station-texts">
+                    <span class="station-type-label">FROM ORIGIN</span>
+                    <span class="station-name-text" id="selected-origin-name">Chennai Central (MMC)</span>
+                    <span class="station-sub-text" id="selected-origin-sub">Suburban Terminal · PF 12-14</span>
+                  </div>
+                </div>
+                <span class="station-pill-badge navy-pill" id="selected-origin-code">MMC</span>
+              </div>
+
+              <!-- Connector Line with Swap Button -->
+              <div class="route-connector-row">
+                <div class="route-connector-line"></div>
+                <button class="btn-swap-route" id="btn-swap-stations" title="Swap Origin & Destination">
+                  <i class="fa-solid fa-arrows-up-down"></i>
+                </button>
+              </div>
+
+              <!-- Destination Station -->
+              <div class="station-input-row" id="dest-station-box">
+                <div class="station-input-left">
+                  <div class="route-dot green-ring"></div>
+                  <div class="station-texts">
+                    <span class="station-type-label">TO DESTINATION</span>
+                    <span class="station-name-text" id="selected-dest-name">Tiruvallur (TRL)</span>
+                    <span class="station-sub-text" id="selected-dest-sub">Platform 1, 2 or 3</span>
+                  </div>
+                </div>
+                <span class="station-pill-badge green-pill" id="selected-dest-code">TRL</span>
+              </div>
+            </div>
+
+            <!-- Filter Row: Date/Time + Fast Trains Switch -->
+            <div class="commute-filter-row">
+              <button class="btn-datetime-picker" id="btn-datetime-picker">
+                <i class="fa-regular fa-calendar"></i>
+                <span id="selected-time-text">Today, 06:30 AM</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+              </button>
+
+              <div class="fast-trains-toggle-group">
+                <span>Fast Trains</span>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-fast-trains" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Primary Action Button -->
+            <button class="btn-primary-search" id="btn-search-trains">
+              <span>Search Local Trains</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Quick Action Grid (4 Items) -->
+          <div class="quick-action-grid">
+            <button class="quick-action-item" data-action="livetrack">
+              <div class="qa-icon-circle qa-indigo">
+                <i class="fa-solid fa-train-tram"></i>
+              </div>
+              <span class="qa-label">Live Track</span>
+            </button>
+            <button class="quick-action-item" data-action="timetable">
+              <div class="qa-icon-circle qa-orange">
+                <i class="fa-solid fa-clipboard-list"></i>
+              </div>
+              <span class="qa-label">Timetable</span>
+            </button>
+            <button class="quick-action-item" data-action="routemap">
+              <div class="qa-icon-circle qa-cyan">
+                <i class="fa-solid fa-map-location-dot"></i>
+              </div>
+              <span class="qa-label">Route Map</span>
+            </button>
+            <button class="quick-action-item" data-action="directory">
+              <div class="qa-icon-circle qa-yellow">
+                <i class="fa-solid fa-folder"></i>
+              </div>
+              <span class="qa-label">Directory</span>
+            </button>
+          </div>
+
+          <!-- Frequent Commute Section -->
+          <div class="frequent-commute-section">
+            <div class="frequent-commute-header">
+              <div class="fc-title">
+                <i class="fa-solid fa-repeat"></i>
+                <span>Frequent Commute</span>
+              </div>
+              <button class="fc-view-all-btn" id="btn-view-all-commute">View All</button>
+            </div>
+
+            <!-- List of Commute Cards -->
+            <div id="frequent-commute-list" style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: SEARCH RESULTS -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-search-results">
+          <div class="m-subview-header">
+            <button class="m-btn-back" onclick="switchMobileTab('home')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="m-subview-title" id="search-results-title">Search Results</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12.5px; color:#64748B;" id="search-results-count">Loading trains...</span>
+            <span style="font-size:11.5px; color:#15803D; font-weight:700; background:#DCFCE7; padding:2px 8px; border-radius:10px;">
+              <i class="fa-solid fa-brain"></i> XGBoost ETA Active
+            </span>
+          </div>
+          <div class="search-results-list" id="search-results-cards-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: SEARCH (BOTTOM TAB 2) -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-search">
+          <h2 class="m-section-headline" style="font-size:24px;">Search Corridor</h2>
+          <div style="position:relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:14px; color:#94A3B8;"></i>
+            <input type="text" id="mobile-quick-search-input" placeholder="Search by train number, name, or station..."
+              style="width:100%; padding:12px 14px 12px 40px; border-radius:14px; border:1px solid #CBD5E1; font-size:14px; outline:none; box-sizing:border-box;">
+          </div>
+          <div style="font-size:13px; font-weight:700; color:#0F172A; margin-top:8px;">Popular Searches</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span class="filter-chip" onclick="document.getElementById('mobile-quick-search-input').value='43209'; executeTrainSearch();">EMU 43209</span>
+            <span class="filter-chip" onclick="document.getElementById('mobile-quick-search-input').value='43205'; executeTrainSearch();">MEMU 43205</span>
+            <span class="filter-chip" onclick="document.getElementById('mobile-quick-search-input').value='Avadi'; executeTrainSearch();">Avadi (AVD)</span>
+            <span class="filter-chip" onclick="document.getElementById('mobile-quick-search-input').value='Ambattur'; executeTrainSearch();">Ambattur (ABU)</span>
+          </div>
+          <div id="quick-search-results-list" style="margin-top:12px; display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: LIVE STATUS (BOTTOM TAB 3) -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-livestatus">
+          <h2 class="m-section-headline" style="font-size:24px;">Corridor Live Status</h2>
+          <div id="mobile-livestatus-container"></div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: TIMETABLE -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-timetable">
+          <div class="m-subview-header">
+            <button class="m-btn-back" onclick="switchMobileTab('home')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="m-subview-title">Corridor Timetable</div>
+          </div>
+          <div id="mobile-timetable-container"></div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: ROUTE MAP -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-routemap">
+          <div class="m-subview-header">
+            <button class="m-btn-back" onclick="switchMobileTab('home')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="m-subview-title">Corridor Route Map</div>
+          </div>
+          <div id="mobile-leaflet-map"></div>
+          <div style="font-size:12px; color:#64748B; line-height:1.5;">
+            <b>Route:</b> Chennai Central (MMC) to Tiruvallur (TRL) · 21 Stations · 41.8 km Suburban Line
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: DIRECTORY -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-directory">
+          <div class="m-subview-header">
+            <button class="m-btn-back" onclick="switchMobileTab('home')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="m-subview-title">Station Directory</div>
+          </div>
+          <div id="mobile-directory-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: SAVED (BOTTOM TAB 4) -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-saved">
+          <h2 class="m-section-headline" style="font-size:24px;">Saved Routes & Trains</h2>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="station-input-row" onclick="selectStationItem('MMC'); selectStationItem('TRL'); switchMobileTab('home');">
+              <div class="station-input-left">
+                <i class="fa-solid fa-star" style="color:#F59E0B; font-size:18px;"></i>
+                <div class="station-texts">
+                  <span class="station-name-text">Chennai Central ➔ Tiruvallur</span>
+                  <span class="station-sub-text">Daily Suburban Office Route · 41.8 km</span>
+                </div>
+              </div>
+              <span class="station-pill-badge navy-pill">MMC-TRL</span>
+            </div>
+            <div class="station-input-row" onclick="selectStationItem('AVD'); selectStationItem('MMC'); switchMobileTab('home');">
+              <div class="station-input-left">
+                <i class="fa-solid fa-star" style="color:#F59E0B; font-size:18px;"></i>
+                <div class="station-texts">
+                  <span class="station-name-text">Avadi ➔ Chennai Central</span>
+                  <span class="station-sub-text">Morning Fast Peak · 21.2 km</span>
+                </div>
+              </div>
+              <span class="station-pill-badge green-pill">AVD-MMC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: PROFILE (BOTTOM TAB 5) -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-profile">
+          <h2 class="m-section-headline" style="font-size:24px;">Commuter Profile</h2>
+          <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:18px; padding:18px; display:flex; align-items:center; gap:16px;">
+            <div class="m-user-avatar" style="width:54px; height:54px; font-size:22px;">A</div>
+            <div>
+              <div style="font-weight:800; font-size:16px; color:#0F172A;">Alex Commuter</div>
+              <div style="font-size:12.5px; color:#64748B;">Chennai Suburban Season Ticket</div>
+              <div style="font-size:11.5px; color:#15803D; font-weight:700; margin-top:2px;">● Pass Active: Valid till Oct 2026</div>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:18px; padding:18px; display:flex; flex-direction:column; gap:14px;">
+            <div style="font-weight:700; font-size:14px; color:#0F172A;">Commuter Preferences</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:#334155;">Delay alerts over 5 minutes</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:#334155;">Weather traction alerts</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:#334155;">Preferred Fast Local trains</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:18px; padding:18px; display:flex; flex-direction:column; gap:10px;">
+            <div style="font-weight:700; font-size:14px; color:#0F172A;">Operations & Control</div>
+            <button class="btn-primary-search" onclick="setMainAppMode('desktop')" style="background:#0F172A; margin:0;">
+              <i class="fa-solid fa-desktop"></i> Open Full Operations Console
+            </button>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Fixed Bottom Navigation Bar -->
+      <nav class="mobile-bottom-nav">
+        <button class="m-nav-tab active" data-tab="home">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
+        </button>
+        <button class="m-nav-tab" data-tab="search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+        <button class="m-nav-tab" data-tab="livestatus">
+          <i class="fa-solid fa-train-subway"></i>
+          <span>Live Status</span>
+        </button>
+        <button class="m-nav-tab" data-tab="saved">
+          <i class="fa-solid fa-bookmark"></i>
+          <span>Saved</span>
+        </button>
+        <button class="m-nav-tab" data-tab="profile">
+          <i class="fa-solid fa-user"></i>
+          <span>Profile</span>
+        </button>
+      </nav>
+
+    </div> <!-- End .mobile-device-container -->
+
+    <!-- ============================================== -->
+    <!-- MODAL BOTTOM SHEETS -->
+    <!-- ============================================== -->
+
+    <!-- Station Picker Bottom Sheet -->
+    <div class="modal-bottom-sheet-overlay" id="sheet-station-picker">
+      <div class="modal-bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title" id="station-picker-title">Select Station</div>
+          <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <input type="text" class="sheet-search-input" id="station-search-input" placeholder="Search 21 stations (e.g. MMC, Avadi, TRL)...">
+        <div class="station-select-list" id="station-select-list"></div>
+      </div>
+    </div>
+
+    <!-- Train Journey Detail Bottom Sheet -->
+    <div class="modal-bottom-sheet-overlay" id="sheet-train-journey">
+      <div class="modal-bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title" id="journey-sheet-train-name">EMU Local</div>
+          <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:14px; padding:14px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase;">AI Dynamic ETA</div>
+            <div style="font-size:22px; font-weight:800; color:#1D4ED8;" id="journey-sheet-eta">--:--</div>
+            <div style="font-size:11.5px; color:#64748B;" id="journey-sheet-range">Confidence: 96.9%</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase;">Live Delay</div>
+            <div style="font-size:18px; font-weight:800; color:#0F172A;" id="journey-sheet-delay">On Time</div>
+          </div>
+        </div>
+
+        <div style="font-size:13.5px; font-weight:700; color:#0F172A;">Station Stops & Live Sequence</div>
+        <div id="journey-stops-timeline" style="max-height:280px; overflow-y:auto; padding:4px 0;"></div>
+      </div>
+    </div>
+
+    <!-- Time Picker Sheet -->
+    <div class="modal-bottom-sheet-overlay" id="sheet-time-picker">
+      <div class="modal-bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Select Departure Time</div>
+          <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="station-select-item" onclick="selectPresetTime('Now (Depart Immediately)')">
+            <span style="font-weight:700; color:#1E3A8A;">Depart Now</span>
+            <span style="font-size:12px; color:#10B981; font-weight:600;">Next Train in 8 min</span>
+          </div>
+          <div class="station-select-item" onclick="selectPresetTime('Today, 06:30 AM')">
+            <span style="font-weight:700;">Today, 06:30 AM</span>
+            <span style="font-size:12px; color:#64748B;">Early Morning</span>
+          </div>
+          <div class="station-select-item" onclick="selectPresetTime('Today, 07:00 AM')">
+            <span style="font-weight:700;">Today, 07:00 AM</span>
+            <span style="font-size:12px; color:#64748B;">Morning Peak</span>
+          </div>
+          <div class="station-select-item" onclick="selectPresetTime('Today, 07:30 AM')">
+            <span style="font-weight:700;">Today, 07:30 AM</span>
+            <span style="font-size:12px; color:#64748B;">Morning Rush</span>
+          </div>
+          <div class="station-select-item" onclick="selectPresetTime('Today, 08:00 AM')">
+            <span style="font-weight:700;">Today, 08:00 AM</span>
+            <span style="font-size:12px; color:#64748B;">Peak Hour</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts Bottom Sheet -->
+    <div class="modal-bottom-sheet-overlay" id="sheet-alerts">
+      <div class="modal-bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title"><i class="fa-solid fa-bell" style="color:#F59E0B;"></i> Corridor Advisories</div>
+          <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:12px;">
+            <div style="font-weight:700; color:#1E40AF; font-size:13px;">Weather Traction Normal</div>
+            <div style="font-size:12px; color:#334155; margin-top:2px;">Live Open-Meteo reports dry tracks across all 21 suburban stations. Full operational speeds permitted.</div>
+          </div>
+          <div style="background:#FEF3C7; border:1px solid #FDE68A; border-radius:12px; padding:12px;">
+            <div style="font-weight:700; color:#92400E; font-size:13px;">TSR Caution Order at Nemilichery</div>
+            <div style="font-size:12px; color:#334155; margin-top:2px;">Track maintenance block active between NEC and TI. Speed restricted to 30 km/h; dynamic delay factored (+2.4m).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End .mobile-app-wrapper -->
+
+  <!-- ============================================================== -->
+  <!-- DESKTOP OPERATIONS CONSOLE LAYOUT (TOGGLEABLE) -->
+  <!-- ============================================================== -->
+  <div id="desktop-console-layout" style="display: none; width: 100%; height: 100vh;">
 
   <!-- Navigation Sidebar -->
   <aside class="sidebar">
@@ -1123,9 +1576,11 @@
 
     </main>
   </div>
+  </div> <!-- End #desktop-console-layout -->
 
   <!-- Scripts: Leaflet, RailGo Application -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/static/script.js"></script>
+  <script src="/static/mobile.js"></script>
 </body>
 </html>
