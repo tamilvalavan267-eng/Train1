@@ -18,6 +18,7 @@ const state = {
   charts: {},
   ws: null
 };
+window.state = state;
 
 // ==========================================
 // 1. INITIALIZATION & DATA FETCHING
@@ -59,6 +60,13 @@ async function loadAllData() {
     renderAlerts();
     renderPassengerView(state.selectedTrainNumber);
     renderControlRoom();
+
+    if (window.updateMobileWeatherCard) {
+      window.updateMobileWeatherCard();
+    }
+    if (window.setupFrequentCommutes) {
+      window.setupFrequentCommutes();
+    }
 
     if (state.currentView === 'railway-map') {
       initRailwayMap();
@@ -302,6 +310,16 @@ function renderDashboardTrains() {
           <span class="delay-cell ${isDelayed ? 'delay-mod' : 'delay-on-time'}">
             ${isDelayed ? `+${t.current_delay}m (${t.running_status})` : '🟢 On Time'}
           </span>
+          ${isDelayed ? `
+            <div class="table-delay-reason" style="font-size: 11px; color: #B91C1C; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px; line-height: 1.25;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size: 10px;"></i>
+              <span>Reason: ${t.delay_reason || 'Operational Congestion'}</span>
+            </div>
+          ` : `
+            <div style="font-size: 10.5px; color: #15803D; margin-top: 2px; font-weight: 500;">
+              Normal Run
+            </div>
+          `}
         </td>
         <td class="eta-cell" style="color: var(--dark-blue); font-size: 13.5px; font-weight: 800;">
           ${t.ai_predicted_eta}
@@ -367,7 +385,14 @@ function renderAllTrainsTable() {
       <td>${t.scheduled_departure}</td>
       <td>${t.scheduled_arrival}</td>
       <td class="delay-cell ${t.current_delay === 0 ? 'delay-on-time' : (t.current_delay < 10 ? 'delay-mod' : 'delay-crit')}">
-        ${t.current_delay > 0 ? `+${t.current_delay}m` : 'On Time'}
+        <div style="font-weight: 700;">${t.current_delay > 0 ? `+${t.current_delay}m` : 'On Time'}</div>
+        ${t.current_delay > 0 ? `
+          <div class="delay-reason-sub" style="font-size: 10.5px; color: #B91C1C; font-weight: 600; margin-top: 3px; line-height: 1.25; white-space: normal;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 9px;"></i> ${t.delay_reason || 'Delay'}
+          </div>
+        ` : `
+          <div style="font-size: 10px; color: #15803D; margin-top: 2px;">Normal</div>
+        `}
       </td>
       <td>${t.current_speed} km/h</td>
       <td><small>${t.signal_status.split('•')[0]}</small></td>
@@ -468,6 +493,12 @@ function renderTrainDetails(trainNumber) {
   document.getElementById('detail-delay-reason').textContent = train.delay_reason;
   document.getElementById('detail-speed').innerHTML = `${train.current_speed} <small>km/h</small>`;
   document.getElementById('detail-current-delay').innerHTML = `+${train.current_delay} <small>min</small>`;
+  const reasonEl = document.getElementById('detail-current-delay-reason');
+  if (reasonEl) {
+    reasonEl.innerHTML = train.current_delay > 0 
+      ? `<i class="fa-solid fa-triangle-exclamation" style="font-size:10px;"></i> Delay Reason: <b>${train.delay_reason || 'Operational Congestion'}</b>` 
+      : `<span style="color:#16A34A;"><i class="fa-solid fa-circle-check"></i> On-time suburban run</span>`;
+  }
   document.getElementById('detail-pred-delay').innerHTML = `+${train.predicted_additional_delay} <small>min</small>`;
   document.getElementById('detail-pred-range').textContent = `Range: ${train.prediction_range} (${train.risk_level} Risk)`;
   document.getElementById('detail-ai-eta').textContent = train.ai_predicted_eta;
@@ -861,6 +892,12 @@ function renderPassengerView(trainNumber) {
   document.getElementById('passenger-train-name').textContent = `EMU ${train.train_number} — ${train.train_name}`;
   document.getElementById('passenger-ai-eta').textContent = train.ai_predicted_eta.slice(0, 5);
   document.getElementById('passenger-delay').textContent = train.current_delay > 0 ? `+${train.current_delay} min` : 'On Time';
+  const pDelayReason = document.getElementById('passenger-delay-reason');
+  if (pDelayReason) {
+    pDelayReason.innerHTML = train.current_delay > 0 
+      ? `<i class="fa-solid fa-triangle-exclamation" style="font-size:10px;"></i> Delay Reason: <strong>${train.delay_reason || 'Operational Congestion'}</strong>` 
+      : `<span style="color:#A7F3D0;"><i class="fa-solid fa-circle-check"></i> On-Time Running</span>`;
+  }
   document.getElementById('passenger-next-stop').textContent = train.next_station;
   document.getElementById('passenger-platform').textContent = `Platform ${train.platform}`;
 

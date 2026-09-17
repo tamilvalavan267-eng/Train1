@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 import pandas as pd
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -39,6 +39,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Cache-Control Middleware to prevent stale frontend caching in client browsers
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # Global In-Memory Train Store initialized from official timetable Excel
 _TRAINS_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -503,14 +512,30 @@ frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fronte
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
 @app.get("/")
+@app.get("/index.html")
 def serve_index():
     index_file = os.path.join(frontend_path, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        return FileResponse(index_file, headers=NO_CACHE_HEADERS)
     return JSONResponse({"message": "RailGo API is running. Frontend index.html not yet found."})
+
+@app.get("/{file_name:path}")
+def serve_frontend_files(file_name: str):
+    """Fallback handler to serve frontend files requested directly from root."""
+    target = os.path.join(frontend_path, file_name)
+    if os.path.isfile(target):
+        return FileResponse(target, headers=NO_CACHE_HEADERS)
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+

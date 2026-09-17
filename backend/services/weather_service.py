@@ -4,6 +4,7 @@ Fetches authentic, live weather and hourly forecasts for all 21 stations on the 
 Implements multi-location batching, caching, WMO decoding, and the Railway Weather Impact Engine.
 """
 
+import os
 import time
 import requests
 import pandas as pd

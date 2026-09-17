@@ -1,4 +1,2 @@
-cat << 'EOF' > pyproject.toml
 [tool.vercel]
 entrypoint = "backend.main:app"
-EOF

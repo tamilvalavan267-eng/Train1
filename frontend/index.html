@@ -14,8 +14,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/mobile.css">
+  <link rel="stylesheet" href="/static/style.css?v=4.1">
+  <link rel="stylesheet" href="/static/mobile.css?v=4.1">
 </head>
 <body>
 
@@ -69,6 +69,28 @@
         <!-- ============================================== -->
         <div class="m-subview active" id="m-subview-home">
           <h1 class="m-section-headline">Home</h1>
+
+          <!-- Live Weather & Temperature Card (Mobile Dashboard) -->
+          <div class="m-weather-card" id="m-dashboard-weather-card">
+            <div class="m-weather-left">
+              <div class="m-weather-icon-box" id="m-weather-icon">
+                <i class="fa-solid fa-cloud-sun" style="color: #FDE047;"></i>
+              </div>
+              <div class="m-weather-info">
+                <div class="m-weather-temp-row">
+                  <span class="m-weather-temp" id="m-weather-temp">--°C</span>
+                  <span class="m-weather-desc" id="m-weather-desc">Live Weather Syncing...</span>
+                </div>
+                <div class="m-weather-station" id="m-weather-station">Chennai Central (MMC) · Suburban Line</div>
+              </div>
+            </div>
+            <div class="m-weather-right">
+              <span class="m-weather-badge" id="m-weather-impact-badge">
+                <i class="fa-solid fa-droplet"></i> <span id="m-weather-humidity">--%</span> · Dry Track
+              </span>
+              <span class="m-weather-sync-tag" id="m-weather-sync-time">LIVE OPEN-METEO</span>
+            </div>
+          </div>
 
           <!-- Suburban Commute Card -->
           <div class="commute-card">
@@ -393,19 +415,70 @@
           <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:14px; padding:14px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase;">AI Dynamic ETA</div>
-            <div style="font-size:22px; font-weight:800; color:#1D4ED8;" id="journey-sheet-eta">--:--</div>
-            <div style="font-size:11.5px; color:#64748B;" id="journey-sheet-range">Confidence: 96.9%</div>
+        <!-- Live Journey ETA & Delay Status Hero Card -->
+        <div class="journey-hero-card" id="journey-hero-card">
+          <div class="journey-hero-top">
+            <div class="journey-hero-col">
+              <span class="journey-hero-label">AI Dynamic ETA</span>
+              <span class="journey-hero-val eta-blue" id="journey-sheet-eta">--:--</span>
+              <span class="journey-hero-sub" id="journey-sheet-range">Confidence: 96.9%</span>
+            </div>
+            <div class="journey-hero-divider"></div>
+            <div class="journey-hero-col right-align">
+              <span class="journey-hero-label">Live Delay</span>
+              <span class="journey-hero-val delay-red" id="journey-sheet-delay">On Time</span>
+              <span class="journey-hero-sub" id="journey-sheet-status-tag" style="font-weight: 700;">Status</span>
+            </div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase;">Live Delay</div>
-            <div style="font-size:18px; font-weight:800; color:#0F172A;" id="journey-sheet-delay">On Time</div>
+          <!-- Integrated Delay Reason Banner inside the Hero Card -->
+          <div class="journey-hero-delay-reason" id="journey-sheet-hero-reason-box">
+            <div class="hero-reason-label" id="journey-sheet-reason-label">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>DELAY REASON:</span>
+            </div>
+            <div class="hero-reason-text" id="journey-sheet-delay-reason">
+              Track Work
+            </div>
+            <div class="hero-reason-sub" id="journey-sheet-reason-sub">
+              Caution orders enforced along corridor. Dynamic AI ETA automatically adapts.
+            </div>
           </div>
         </div>
 
-        <div style="font-size:13.5px; font-weight:700; color:#0F172A;">Station Stops & Live Sequence</div>
+        <!-- Dedicated Delay Reason & Operational Cause Card (Shown when clicking Details) -->
+        <div id="journey-sheet-delay-card" class="journey-delay-box" style="display: none;">
+          <div class="delay-box-header">
+            <div class="delay-box-title">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>TRAIN DELAY REASON & CAUSE</span>
+            </div>
+            <span class="delay-badge-chip" id="journey-delay-chip">+6 min</span>
+          </div>
+          <div class="delay-box-primary-reason" id="journey-sheet-delay-reason-main">
+            Signal Clearance Delay at Basin Bridge Jn
+          </div>
+          <div class="delay-box-sub-desc" id="journey-sheet-delay-desc">
+            Speed regulated due to track occupation. Dynamic AI ETA automatically factors scheduled recovery margin.
+          </div>
+          <div class="delay-box-impact-row">
+            <span class="delay-impact-item" id="journey-impact-signal"><i class="fa-solid fa-traffic-light"></i> Signal: Caution</span>
+            <span class="delay-impact-item" id="journey-impact-speed"><i class="fa-solid fa-gauge"></i> Speed: 28 km/h</span>
+            <span class="delay-impact-item" id="journey-impact-weather"><i class="fa-solid fa-cloud"></i> Weather: Normal</span>
+          </div>
+        </div>
+
+        <!-- On-Time Card when train is running on schedule -->
+        <div id="journey-sheet-ontime-card" class="journey-ontime-box" style="display: none;">
+          <div class="ontime-box-header">
+            <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
+            <span>ON-TIME SCHEDULED OPERATION</span>
+          </div>
+          <div class="ontime-box-desc">
+            Normal suburban block speed maintained. Signals are clear with no caution orders along the corridor.
+          </div>
+        </div>
+
+        <div style="font-size:13.5px; font-weight:700; color:#0F172A; margin-top: 10px;">Station Stops & Live Sequence</div>
         <div id="journey-stops-timeline" style="max-height:280px; overflow-y:auto; padding:4px 0;"></div>
       </div>
     </div>
@@ -902,7 +975,7 @@
             <div class="kpi-card yellow">
               <div class="kpi-header">CURRENT DELAY</div>
               <div class="kpi-value" id="detail-current-delay">0 <small>min</small></div>
-              <div class="kpi-subtext">Inherent route delay</div>
+              <div class="kpi-subtext" id="detail-current-delay-reason" style="font-weight: 600; color: #DC2626;">Normal operation</div>
             </div>
             <div class="kpi-card red">
               <div class="kpi-header">AI PREDICTED DELAY</div>
@@ -1451,6 +1524,7 @@
             <div style="border-left: 2px solid rgba(255,255,255,0.2); padding-left: 20px;">
               <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Current Delay</div>
               <div style="font-size: 28px; font-weight: 700;" id="passenger-delay">+0 min</div>
+              <div style="font-size: 11.5px; color: #FFCDD2; font-weight: 600; margin-top: 3px;" id="passenger-delay-reason"></div>
             </div>
             <div style="border-left: 2px solid rgba(255,255,255,0.2); padding-left: 20px;">
               <div style="font-size: 12px; color: #BBDEFB; text-transform: uppercase;">Next Station</div>
@@ -1580,7 +1654,7 @@
 
   <!-- Scripts: Leaflet, RailGo Application -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/static/script.js"></script>
-  <script src="/static/mobile.js"></script>
+  <script src="/static/script.js?v=4.1"></script>
+  <script src="/static/mobile.js?v=4.1"></script>
 </body>
 </html>

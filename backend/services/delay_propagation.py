@@ -4,6 +4,7 @@ Calculates dynamically evolving station-by-station arrival times from current st
 Accounts for distance, section speed restrictions, upcoming signal conditions, weather, and schedule recovery margins.
 """
 
+import os
 from datetime import datetime, timedelta
 import pandas as pd
 from typing import List, Dict, Any
@@ -65,7 +66,8 @@ def propagate_station_delays(
                 "running_status": "Passed",
                 "conditions_summary": "Station Departed",
                 "risk_level": "LOW",
-                "platform": int(row.get('platforms', 2))
+                "platform": int(row.get('platforms', 2)),
+                "delay_minutes": round(current_delay_min * 0.5, 1)
             })
             continue
 
@@ -83,7 +85,8 @@ def propagate_station_delays(
                 "running_status": "Current Position",
                 "conditions_summary": "Train at station / in section",
                 "risk_level": "LOW" if current_delay_min < 5 else ("MEDIUM" if current_delay_min < 12 else "HIGH"),
-                "platform": int(row.get('platforms', 2))
+                "platform": int(row.get('platforms', 2)),
+                "delay_minutes": round(current_delay_min, 1)
             })
             continue
 
@@ -138,7 +141,8 @@ def propagate_station_delays(
             "running_status": "Upcoming",
             "conditions_summary": " • ".join(cond_notes),
             "risk_level": risk,
-            "platform": int(row.get('platforms', 2))
+            "platform": int(row.get('platforms', 2)),
+            "delay_minutes": round(accumulated_delay, 1)
         })
 
     return results

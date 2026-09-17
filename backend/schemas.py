@@ -115,6 +115,7 @@ class StationETASchema(BaseModel):
     conditions_summary: str
     risk_level: str
     platform: int
+    delay_minutes: Optional[float] = 0.0
 
 
 class AIFactorExplanation(BaseModel):
