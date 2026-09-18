@@ -18,7 +18,7 @@ def detect_railway_conditions(
     current_speed: float,
     current_delay: float,
     train_type: str = "EMU Local",
-    destination_seq: int = 21
+    destination_seq: int = 20
 ) -> Dict[str, Any]:
     """
     Unifies all operational dimensions for a specific moving train.

@@ -511,11 +511,11 @@ input:checked + .slider:before {
   transform: translateY(0);
 }
 
-/* Quick Actions Grid (4 Items) */
+/* Quick Actions Grid (5 Items) */
 .quick-action-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
 }
 
 .quick-action-item {
@@ -1420,6 +1420,27 @@ input:checked + .slider:before {
   background: #FEE2E2;
   border: 2px solid #DC2626;
 }
+
+.btn-book-ticket-pill {
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-book-ticket-pill:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
 
 
 

@@ -730,3 +730,43 @@ body.desktop-mode {
   color: #B91C1C;
   border: 1px solid #FECACA;
 }
+
+/* Map Engine Switch Pills */
+.map-switch-pill {
+  transition: all 0.2s ease;
+}
+.map-switch-pill:hover {
+  filter: brightness(1.05);
+}
+
+/* Booking Feature Styling */
+.btn-book-ticket-pill {
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(29, 78, 216, 0.2);
+}
+.btn-book-ticket-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(29, 78, 216, 0.35);
+  filter: brightness(1.08);
+}
+.booking-portal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.modal-bottom-sheet-overlay.open {
+  display: flex !important;
+  opacity: 1;
+  visibility: visible;
+}
+

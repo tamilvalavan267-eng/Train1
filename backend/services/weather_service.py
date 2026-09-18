@@ -1,6 +1,6 @@
 """
 RailGo Weather Service - Open-Meteo API Integration
-Fetches authentic, live weather and hourly forecasts for all 21 stations on the Chennai Central-Tiruvallur corridor.
+Fetches authentic, live weather and hourly forecasts for all 20 stations on the Chennai Central-Tiruvallur corridor.
 Implements multi-location batching, caching, WMO decoding, and the Railway Weather Impact Engine.
 """
 
@@ -55,7 +55,7 @@ def evaluate_weather_impact(rain: float, gusts: float, visibility: float, code: 
 
 def fetch_all_stations_weather(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """
-    Fetches real-time weather from Open-Meteo API for all 21 corridor stations.
+    Fetches real-time weather from Open-Meteo API for all 20 corridor stations.
     Uses multi-location querying supported natively by Open-Meteo.
     """
     global _WEATHER_CACHE, _LAST_FETCH_TIME

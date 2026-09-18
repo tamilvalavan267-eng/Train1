@@ -81,7 +81,7 @@
                   <span class="m-weather-temp" id="m-weather-temp">--°C</span>
                   <span class="m-weather-desc" id="m-weather-desc">Live Weather Syncing...</span>
                 </div>
-                <div class="m-weather-station" id="m-weather-station">Chennai Central (MMC) · Suburban Line</div>
+                <div class="m-weather-station" id="m-weather-station">Chennai Central (MASS) · Suburban Line</div>
               </div>
             </div>
             <div class="m-weather-right">
@@ -105,11 +105,11 @@
                   <div class="route-dot blue-solid"></div>
                   <div class="station-texts">
                     <span class="station-type-label">FROM ORIGIN</span>
-                    <span class="station-name-text" id="selected-origin-name">Chennai Central (MMC)</span>
+                    <span class="station-name-text" id="selected-origin-name">Chennai Central (MASS)</span>
                     <span class="station-sub-text" id="selected-origin-sub">Suburban Terminal · PF 12-14</span>
                   </div>
                 </div>
-                <span class="station-pill-badge navy-pill" id="selected-origin-code">MMC</span>
+                <span class="station-pill-badge navy-pill" id="selected-origin-code">MASS</span>
               </div>
 
               <!-- Connector Line with Swap Button -->
@@ -183,6 +183,12 @@
                 <i class="fa-solid fa-folder"></i>
               </div>
               <span class="qa-label">Directory</span>
+            </button>
+            <button class="quick-action-item" data-action="booking">
+              <div class="qa-icon-circle" style="background: #EFF6FF; color: #1D4ED8;">
+                <i class="fa-solid fa-ticket"></i>
+              </div>
+              <span class="qa-label">Book Ticket</span>
             </button>
           </div>
 
@@ -274,10 +280,99 @@
               <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="m-subview-title">Corridor Route Map</div>
+            <div class="m-map-engine-switch" style="margin-left: auto; display: flex; gap: 4px; background: #F1F5F9; padding: 2px; border-radius: 8px;">
+              <button id="btn-m-map-google" onclick="switchMobileMapLayer('roadmap')" style="border:none; cursor:pointer; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; background:#1E3A8A; color:#FFF;">Google</button>
+              <button id="btn-m-map-satellite" onclick="switchMobileMapLayer('satellite')" style="border:none; cursor:pointer; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; background:transparent; color:#64748B;">Satellite</button>
+              <button id="btn-m-map-leaflet" onclick="switchMobileMapLayer('osm')" style="border:none; cursor:pointer; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; background:transparent; color:#64748B;">OSM</button>
+            </div>
           </div>
-          <div id="mobile-leaflet-map"></div>
+          <div style="position: relative; width: 100%; height: 350px; border-radius: 14px; overflow: hidden; margin-bottom: 12px; border: 1px solid #E2E8F0;">
+            <div id="mobile-google-map" style="position: absolute; top:0; left:0; width: 100%; height: 100%; z-index: 5;"></div>
+          </div>
           <div style="font-size:12px; color:#64748B; line-height:1.5;">
-            <b>Route:</b> Chennai Central (MMC) to Tiruvallur (TRL) · 21 Stations · 41.8 km Suburban Line
+            <b>Route:</b> Chennai Central (MASS) to Tiruvallur (TRL) · 20 Stations · 41.8 km Suburban Line
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- SUBVIEW: BOOK TRAIN TICKET -->
+        <!-- ============================================== -->
+        <div class="m-subview" id="m-subview-booking">
+          <div class="m-subview-header">
+            <button class="m-btn-back" onclick="switchMobileTab('home')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="m-subview-title">🎫 In-App Train Booking</div>
+          </div>
+
+          <!-- Subtab Navigation inside Mobile Booking -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; background: #F1F5F9; padding: 3px; border-radius: 12px;">
+            <button id="m-btn-book-tab-search" onclick="switchMobileBookingSubtab('search')" style="flex: 1; border: none; outline: none; padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; background: #1E3A8A; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fa-solid fa-magnifying-glass"></i> Search Trains
+            </button>
+            <button id="m-btn-book-tab-mytickets" onclick="switchMobileBookingSubtab('mytickets')" style="flex: 1; border: none; outline: none; padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; background: transparent; color: #64748B; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fa-solid fa-qrcode"></i> My Tickets (<span id="m-tab-ticket-count">1</span>)
+            </button>
+          </div>
+
+          <!-- Subtab 1: Search Form & Available Trains -->
+          <div id="m-booking-search-pane">
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 11px; font-weight: 800; color: #1E3A8A; letter-spacing: 0.5px;">IN-APP SUBURBAN BOOKING</span>
+                <span style="font-size: 10.5px; background: #DCFCE7; color: #15803D; font-weight: 700; padding: 2px 7px; border-radius: 8px;">Instant QR Pass</span>
+              </div>
+              <div class="route-picker-box">
+                <div class="station-input-row" onclick="openStationPicker('origin')">
+                  <div class="station-input-left">
+                    <div class="route-dot blue-solid"></div>
+                    <div class="station-texts">
+                      <span class="station-type-label">FROM ORIGIN</span>
+                      <span class="station-name-text" id="m-booking-origin-name">Chennai Central (MASS)</span>
+                      <span class="station-sub-text" id="m-booking-origin-sub">Suburban Terminal · PF 12-14</span>
+                    </div>
+                  </div>
+                  <span class="station-pill-badge navy-pill" id="m-booking-origin-code">MASS</span>
+                </div>
+                <div class="route-connector-row">
+                  <div class="route-connector-line"></div>
+                  <button class="btn-swap-route" onclick="swapMobileBookingStations()">
+                    <i class="fa-solid fa-arrows-up-down"></i>
+                  </button>
+                </div>
+                <div class="station-input-row" onclick="openStationPicker('dest')">
+                  <div class="station-input-left">
+                    <div class="route-dot green-ring"></div>
+                    <div class="station-texts">
+                      <span class="station-type-label">TO DESTINATION</span>
+                      <span class="station-name-text" id="m-booking-dest-name">Tiruvallur (TRL)</span>
+                      <span class="station-sub-text" id="m-booking-dest-sub">Platform 1, 2 or 3</span>
+                    </div>
+                  </div>
+                  <span class="station-pill-badge green-pill" id="m-booking-dest-code">TRL</span>
+                </div>
+              </div>
+              <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                <input type="date" id="m-booking-date" class="sheet-search-input" style="margin: 0; flex: 1; padding: 8px 12px; font-size: 13px; height: 38px; box-sizing: border-box;">
+                <button class="btn-primary-search" style="margin: 0; width: auto; padding: 8px 16px; height: 38px; display: flex; align-items: center; gap: 6px; font-size: 13px;" onclick="executeMobileBookingSearch()">
+                  <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span id="m-booking-count-label" style="font-size: 12.5px; font-weight: 700; color: #475569;">Available Trains</span>
+              <span style="font-size: 11px; color: #166534; font-weight: 600;"><i class="fa-solid fa-bolt"></i> Instant RailGo QR Pass</span>
+            </div>
+            <div id="m-booking-results-container" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Rendered list of trains with Book Ticket buttons -->
+            </div>
+          </div>
+
+          <!-- Subtab 2: My Booked Tickets & Passes -->
+          <div id="m-booking-mytickets-pane" style="display: none;">
+            <div id="m-booked-tickets-container" style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Rendered active tickets -->
+            </div>
           </div>
         </div>
 
@@ -300,7 +395,7 @@
         <div class="m-subview" id="m-subview-saved">
           <h2 class="m-section-headline" style="font-size:24px;">Saved Routes & Trains</h2>
           <div style="display:flex; flex-direction:column; gap:12px;">
-            <div class="station-input-row" onclick="selectStationItem('MMC'); selectStationItem('TRL'); switchMobileTab('home');">
+            <div class="station-input-row" onclick="selectStationItem('MASS'); selectStationItem('TRL'); switchMobileTab('home');">
               <div class="station-input-left">
                 <i class="fa-solid fa-star" style="color:#F59E0B; font-size:18px;"></i>
                 <div class="station-texts">
@@ -308,9 +403,9 @@
                   <span class="station-sub-text">Daily Suburban Office Route · 41.8 km</span>
                 </div>
               </div>
-              <span class="station-pill-badge navy-pill">MMC-TRL</span>
+              <span class="station-pill-badge navy-pill">MASS-TRL</span>
             </div>
-            <div class="station-input-row" onclick="selectStationItem('AVD'); selectStationItem('MMC'); switchMobileTab('home');">
+            <div class="station-input-row" onclick="selectStationItem('AVD'); selectStationItem('MASS'); switchMobileTab('home');">
               <div class="station-input-left">
                 <i class="fa-solid fa-star" style="color:#F59E0B; font-size:18px;"></i>
                 <div class="station-texts">
@@ -318,7 +413,7 @@
                   <span class="station-sub-text">Morning Fast Peak · 21.2 km</span>
                 </div>
               </div>
-              <span class="station-pill-badge green-pill">AVD-MMC</span>
+              <span class="station-pill-badge green-pill">AVD-MASS</span>
             </div>
           </div>
         </div>
@@ -401,7 +496,7 @@
           <div class="sheet-title" id="station-picker-title">Select Station</div>
           <button class="sheet-close-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <input type="text" class="sheet-search-input" id="station-search-input" placeholder="Search 21 stations (e.g. MMC, Avadi, TRL)...">
+        <input type="text" class="sheet-search-input" id="station-search-input" placeholder="Search 20 stations (e.g. MASS, Avadi, TRL)...">
         <div class="station-select-list" id="station-select-list"></div>
       </div>
     </div>
@@ -579,6 +674,11 @@
         <i class="fa-solid fa-map-location-dot"></i>
         <span>Railway Map</span>
       </li>
+      <li class="nav-item" data-view="book-ticket">
+        <i class="fa-solid fa-ticket"></i>
+        <span>Book Train Ticket</span>
+        <span class="badge" style="background:#2563EB;">NEW</span>
+      </li>
     </ul>
 
     <div class="nav-section-title">AI & Conditions</div>
@@ -737,7 +837,7 @@
               <i class="fa-solid fa-cloud-sun" style="color: var(--status-green);"></i>
             </div>
             <div class="kpi-value" id="kpi-weather-summary">32°C <small>Fair</small></div>
-            <div class="kpi-subtext">All 21 stations live Open-Meteo</div>
+            <div class="kpi-subtext">All 20 stations live Open-Meteo</div>
           </div>
 
           <div class="kpi-card" onclick="switchView('ai-prediction')">
@@ -1110,14 +1210,200 @@
               <i class="fa-solid fa-map-location-dot"></i>
               <span>Interactive Railway Map: Chennai Central to Tiruvallur</span>
             </div>
-            <div style="display: flex; gap: 12px; font-size: 12px; align-items: center;">
+            <div style="display: flex; gap: 12px; font-size: 12px; align-items: center; flex-wrap: wrap;">
               <span><span style="color:#2E7D32;">●</span> Station</span>
               <span><span style="color:#1565C0;">■</span> Train Location</span>
               <span><span style="color:#E65100;">▲</span> Engineering Work</span>
               <span><span style="color:#C62828;">◆</span> Signal Restriction</span>
+
+              <!-- Google Maps / Satellite / OSM Map Layer Switcher -->
+              <div class="map-engine-switch" style="display: flex; gap: 4px; margin-left: 10px; background: #F1F5F9; padding: 3px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                <button id="btn-map-engine-google" class="map-switch-pill active" onclick="switchRailwayMapLayer('roadmap')" style="border:none; outline:none; cursor:pointer; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; background:#1E3A8A; color:#FFFFFF;">
+                  <i class="fa-brands fa-google"></i> Google Maps
+                </button>
+                <button id="btn-map-engine-satellite" class="map-switch-pill" onclick="switchRailwayMapLayer('satellite')" style="border:none; outline:none; cursor:pointer; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; background:transparent; color:#64748B;">
+                  <i class="fa-solid fa-satellite"></i> Satellite
+                </button>
+                <button id="btn-map-engine-hybrid" class="map-switch-pill" onclick="switchRailwayMapLayer('hybrid')" style="border:none; outline:none; cursor:pointer; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; background:transparent; color:#64748B;">
+                  <i class="fa-solid fa-layer-group"></i> Hybrid
+                </button>
+                <button id="btn-map-engine-leaflet" class="map-switch-pill" onclick="switchRailwayMapLayer('osm')" style="border:none; outline:none; cursor:pointer; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; background:transparent; color:#64748B;">
+                  <i class="fa-solid fa-map"></i> OSM
+                </button>
+              </div>
             </div>
           </div>
-          <div id="railway-leaflet-map" class="map-container"></div>
+          <div class="map-container-wrap" style="position: relative; width: 100%; height: 520px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+            <div id="railway-google-map" class="map-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; border: none;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: BOOK TRAIN TICKET -->
+      <!-- ======================================================= -->
+      <section class="view-panel" id="view-book-ticket">
+        <!-- Hero Card -->
+        <div class="card" style="background: linear-gradient(135deg, #1E3A8A 0%, #172554 100%); color: #FFFFFF; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px; font-size: 16px;">🎫</span>
+                <h2 style="font-size: 20px; font-weight: 800; margin: 0; color: #FFFFFF;">RailGo In-App Suburban Ticket Booking</h2>
+                <span class="badge-tag" style="background: #10B981; color: #FFFFFF; font-weight: 700;">DIRECT IN-APP BOOKING</span>
+              </div>
+              <p style="margin: 0; font-size: 13.5px; color: #CBD5E1; max-width: 820px; line-height: 1.5;">
+                Book Chennai suburban EMU / MEMU local train tickets directly within RailGo. Generate digital unreserved & first-class QR tickets with live turnstile validation, real-time XGBoost AI ETA tracking, and active commuter passes without any external apps.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button class="btn btn-outline" id="desktop-btn-toggle-mytickets" onclick="toggleDesktopBookingView('mytickets')" style="background: rgba(255,255,255,0.15); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.3); font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <i class="fa-solid fa-ticket"></i> My Booked Tickets (<span id="desktop-tickets-badge">1</span>)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-Navigation Bar -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">
+          <button id="tab-btn-book-search" class="switch-pill-btn active" onclick="toggleDesktopBookingView('search')" style="padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; background: #1E3A8A; color: #FFFFFF;">
+            <i class="fa-solid fa-magnifying-glass"></i> Search & Book Trains
+          </button>
+          <button id="tab-btn-book-mytickets" class="switch-pill-btn" onclick="toggleDesktopBookingView('mytickets')" style="padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; background: transparent; color: #64748B;">
+            <i class="fa-solid fa-qrcode"></i> My Booked Tickets & Passes (<span id="desktop-tab-ticket-count">1</span>)
+          </button>
+        </div>
+
+        <!-- Section A: Search & Book Trains -->
+        <div id="desktop-booking-search-section">
+          <!-- Search Form Card -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-magnifying-glass-location"></i>
+                <span>Select Journey Stations & Date</span>
+              </div>
+              <span style="font-size: 12px; color: #64748B;">Corridor: 20 Stations · 41.8 km West Line</span>
+            </div>
+
+            <div class="booking-search-grid" style="display: grid; grid-template-columns: 1fr auto 1fr 180px 160px auto; gap: 12px; align-items: end; margin-top: 8px;">
+              <div>
+                <label for="booking-from-select" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
+                  <i class="fa-solid fa-circle-dot" style="color: #2563EB;"></i> FROM STATION
+                </label>
+                <select id="booking-from-select" class="select-filter" style="width: 100%;">
+                  <!-- Populated with all 21 stations -->
+                </select>
+              </div>
+
+              <div style="padding-bottom: 4px;">
+                <button id="btn-booking-swap-stations" title="Swap Stations" class="btn btn-outline" style="padding: 9px 12px; border-radius: 8px;" onclick="swapBookingStationsDesktop()">
+                  <i class="fa-solid fa-right-left"></i>
+                </button>
+              </div>
+
+              <div>
+                <label for="booking-to-select" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
+                  <i class="fa-solid fa-location-dot" style="color: #10B981;"></i> TO STATION
+                </label>
+                <select id="booking-to-select" class="select-filter" style="width: 100%;">
+                  <!-- Populated with all 21 stations -->
+                </select>
+              </div>
+
+              <div>
+                <label for="booking-date-input" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
+                  <i class="fa-regular fa-calendar"></i> JOURNEY DATE
+                </label>
+                <input type="date" id="booking-date-input" class="select-filter" style="width: 100%;">
+              </div>
+
+              <div>
+                <label for="booking-type-select" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">
+                  <i class="fa-solid fa-train"></i> TRAIN TYPE
+                </label>
+                <select id="booking-type-select" class="select-filter" style="width: 100%;">
+                  <option value="All">All Types</option>
+                  <option value="Fast Local">Fast Local</option>
+                  <option value="EMU Local">EMU Local</option>
+                  <option value="MEMU">MEMU</option>
+                </select>
+              </div>
+
+              <div style="padding-bottom: 4px;">
+                <button id="btn-search-booking-trains" class="btn btn-primary" style="padding: 10px 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;" onclick="searchBookingTrainsDesktop()">
+                  <i class="fa-solid fa-magnifying-glass"></i> Search Trains
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Date Chips & Compliance Note -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 12px; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="color: #64748B; font-weight: 600;">Quick Dates:</span>
+                <button class="filter-chip active" id="chip-date-today" onclick="setBookingDateQuick('today')">Today</button>
+                <button class="filter-chip" id="chip-date-tomorrow" onclick="setBookingDateQuick('tomorrow')">Tomorrow</button>
+              </div>
+              <div style="color: #64748B;">
+                <i class="fa-solid fa-circle-info" style="color: #0284C7;"></i> Southern Railway Suburban fares: <b>₹5 – ₹10 (Second Class)</b> · <b>₹50 – ₹65 (First Class)</b> · <b>Instant In-App QR Pass</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Results Summary Bar -->
+          <div id="booking-results-summary-bar" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 800; font-size: 15px; color: #0F172A;" id="booking-summary-route">Chennai Central (MASS) → Tiruvallur (TRL)</span>
+              <span class="badge-tag badge-live" id="booking-summary-count">Loading trains...</span>
+              <span style="font-size: 12px; color: #64748B;" id="booking-summary-dist">41.8 km · Suburban Corridor</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="station-pill-badge navy-pill" id="booking-fare-2nd">₹10 (2nd Class)</span>
+              <span class="station-pill-badge green-pill" id="booking-fare-1st">₹65 (1st Class)</span>
+            </div>
+          </div>
+
+          <!-- Search Results Table Card -->
+          <div class="card">
+            <div class="table-container">
+              <table class="data-table" id="booking-trains-table">
+                <thead>
+                  <tr>
+                    <th>Train</th>
+                    <th>Type</th>
+                    <th>Departs (From)</th>
+                    <th>Arrives (To)</th>
+                    <th>Duration</th>
+                    <th>Platform</th>
+                    <th>Live Status</th>
+                    <th>Dynamic AI ETA</th>
+                    <th style="text-align: right;">In-App Booking</th>
+                  </tr>
+                </thead>
+                <tbody id="booking-trains-tbody">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: My Booked Tickets & Passes -->
+        <div id="desktop-booking-mytickets-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>Active RailGo Digital Commuter Passes & Tickets</span>
+              </div>
+              <button class="btn btn-outline" onclick="loadMyBookedTicketsDesktop()" style="font-size: 12px; padding: 6px 12px;">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh Passes
+              </button>
+            </div>
+            <div id="desktop-mytickets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; margin-top: 10px;">
+              <!-- Booked tickets rendered here -->
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1679,9 +1965,128 @@
   </div>
   </div> <!-- End #desktop-console-layout -->
 
+  <!-- Modal: In-App Suburban Ticket Booking & Digital QR Pass -->
+  <div class="modal-bottom-sheet-overlay" id="modal-railgo-booking" style="z-index: 99999; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px);">
+    <div style="background: #FFFFFF; border-radius: 20px; max-width: 520px; width: 92%; padding: 22px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); position: relative; margin: auto; max-height: 92vh; overflow-y: auto; box-sizing: border-box; border: 1px solid #CBD5E1;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: #EFF6FF; color: #1D4ED8; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <i class="fa-solid fa-ticket"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #0F172A;" id="railgo-booking-modal-title">RailGo Digital Suburban Ticket</h3>
+            <span style="font-size: 11.5px; color: #15803D; font-weight: 700;" id="railgo-booking-modal-sub"><i class="fa-solid fa-circle-check"></i> Direct In-App Commuter Pass</span>
+          </div>
+        </div>
+        <button onclick="closeInAppBookingModal()" style="border:none; background: #F1F5F9; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 15px; color: #475569; display: flex; align-items: center; justify-content: center;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- PANE 1: Booking Form -->
+      <div id="booking-pane-form">
+        <!-- Train & Route Summary -->
+        <div id="booking-form-journey-summary" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- Passenger Details Form -->
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+          <div style="font-size: 12.5px; font-weight: 700; color: #1E293B;">Passenger & Commute Details</div>
+          
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">PASSENGER NAME</label>
+              <input type="text" id="inapp-pax-name" value="Alex Commuter" placeholder="Enter passenger name" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; outline: none;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">AGE</label>
+              <input type="number" id="inapp-pax-age" value="28" min="5" max="100" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; outline: none;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">GENDER</label>
+              <select id="inapp-pax-gender" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; background: #FFF; outline: none;">
+                <option value="Male" selected>Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">PASSENGERS</label>
+              <select id="inapp-pax-count" onchange="recalculateInAppFare()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; background: #FFF; outline: none;">
+                <option value="1" selected>1 Passenger</option>
+                <option value="2">2 Passengers</option>
+                <option value="3">3 Passengers</option>
+                <option value="4">4 Passengers</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Class & Journey Type -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">TICKET CLASS</label>
+              <select id="inapp-ticket-class" onchange="recalculateInAppFare()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; background: #FFF; outline: none;">
+                <option value="Second Class (II)" selected>Second Class (II)</option>
+                <option value="First Class (FC)">First Class (FC)</option>
+                <option value="AC Suburban (AC)">AC Suburban Local</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748B; display: block; margin-bottom: 4px;">JOURNEY TYPE</label>
+              <select id="inapp-journey-type" onchange="recalculateInAppFare()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; box-sizing: border-box; background: #FFF; outline: none;">
+                <option value="Single Journey" selected>Single Journey</option>
+                <option value="Return Journey">Return Journey (Round Trip)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fare Calculation Card -->
+        <div style="background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; color: #1E40AF; font-weight: 700; text-transform: uppercase;">Total In-App Fare</div>
+            <div style="font-size: 12px; color: #3B82F6;" id="inapp-fare-breakdown">₹10 × 1 passenger · Single Journey</div>
+          </div>
+          <div style="font-size: 26px; font-weight: 800; color: #1D4ED8; font-family: 'JetBrains Mono', monospace;" id="inapp-total-fare-display">₹10.00</div>
+        </div>
+
+        <!-- Confirm Booking Button -->
+        <button id="btn-confirm-inapp-booking" onclick="confirmInAppBooking()" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%); box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);">
+          <i class="fa-solid fa-credit-card"></i>
+          <span>Confirm & Generate Digital Ticket</span>
+        </button>
+      </div>
+
+      <!-- PANE 2: Digital Ticket Pass (Instant QR Pass) -->
+      <div id="booking-pane-pass" style="display: none;">
+        <div id="digital-pass-render-container">
+          <!-- Injected via JS with QR Code, Ticket ID, PNR, and validation status -->
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button onclick="printCurrentDigitalPass()" class="btn btn-outline" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-print"></i> Print Ticket
+          </button>
+          <button onclick="viewAllBookedTickets()" class="btn btn-primary" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-ticket"></i> View All Tickets
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Scripts: Leaflet, RailGo Application -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/static/script.js?v=4.1"></script>
-  <script src="/static/mobile.js?v=4.1"></script>
+  <script src="/static/script.js?v=4.3"></script>
+  <script src="/static/mobile.js?v=4.3"></script>
+
+  <!-- Google Maps JavaScript API -->
+  <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&loading=async&callback=initMap"></script>
 </body>
 </html>

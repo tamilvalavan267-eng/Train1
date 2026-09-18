@@ -25,9 +25,9 @@ Train Schedule (Excel) + Live Train Movement + Signal Conditions + Construction 
 ```
 
 ### Core Highlights:
-- **Corridor Coverage**: Chennai Central Suburban (`MASS`/`MMC`) to Tiruvallur (`TRL`) spanning 21 stations over 41.8 km.
+- **Corridor Coverage**: Chennai Central Suburban (`MASS`) to Tiruvallur (`TRL`) spanning 20 stations over 41.8 km.
 - **Official Timetable Ingestion**: Ingests 61 suburban EMU/MEMU services with station sequences and timings from `MASS_to_TRL_All_Local_Trains.xlsx` and `Chennai_Central_to_Tiruvallur_Local_Train_Format.xlsx`.
-- **Live Open-Meteo Weather Integration**: Queries authentic live atmospheric parameters (`temperature_2m`, `precipitation`, `rain`, `wind_speed_10m`, `wind_gusts_10m`, `visibility`, `weather_code`) for all 21 station coordinates with automated caching and railway traction impact scoring (`LOW`, `MEDIUM`, `HIGH`).
+- **Live Open-Meteo Weather Integration**: Queries authentic live atmospheric parameters (`temperature_2m`, `precipitation`, `rain`, `wind_speed_10m`, `wind_gusts_10m`, `visibility`, `weather_code`) for all 20 station coordinates with automated caching and railway traction impact scoring (`LOW`, `MEDIUM`, `HIGH`).
 - **Signal & Engineering Work Monitoring**: Section-by-section monitoring adhering to strict truthfulness rules (clearly displaying `Signal operational data unavailable` when telemetry is offline, never claiming unverified faults).
 - **Route-Matching Construction Engine**: Only applies delays if the train's path approaches an active engineering block or Temporary Speed Restriction (TSR).
 - **XGBoost Machine Learning**: Regressor trained with engineered interaction features achieving **MAE 0.90 min, RMSE 1.14 min, R² 0.9692**, complete with uncertainty range estimation (e.g., `+7 min (Range: +5 to +10 min)`) and factor impact attributions.

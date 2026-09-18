@@ -170,6 +170,37 @@ class PredictionRecord(Base):
     train = relationship("Train", back_populates="predictions")
 
 
+class BookedTicket(Base):
+    __tablename__ = "booked_tickets"
+
+    ticket_id = Column(String(50), primary_key=True, index=True)
+    pnr_number = Column(String(20), unique=True, index=True)
+    train_number = Column(Integer, nullable=False)
+    train_name = Column(String(100), nullable=False)
+    train_type = Column(String(50), default="EMU Local")
+    from_station_code = Column(String(20), nullable=False)
+    from_station_name = Column(String(100), nullable=False)
+    to_station_code = Column(String(20), nullable=False)
+    to_station_name = Column(String(100), nullable=False)
+    journey_date = Column(String(30), nullable=False)
+    departure_time = Column(String(20))
+    arrival_time = Column(String(20))
+    ai_predicted_eta = Column(String(20))
+    platform = Column(Integer, default=1)
+    distance_km = Column(Float, default=0.0)
+    passenger_name = Column(String(100), default="Alex Commuter")
+    passenger_age = Column(Integer, default=28)
+    passenger_gender = Column(String(20), default="Male")
+    passenger_count = Column(Integer, default=1)
+    ticket_class = Column(String(50), default="Second Class (II)")
+    journey_type = Column(String(50), default="Single Journey")
+    fare_amount = Column(Float, default=10.0)
+    status = Column(String(30), default="CONFIRMED - ACTIVE")
+    booked_at = Column(DateTime, default=utc_now)
+    valid_until = Column(String(50), default="")
+    qr_code_data = Column(Text, default="")
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -246,17 +277,20 @@ def seed_database(db=None):
 
                     # Station sequence
                     if pd.notna(row['Current Station']) and str(row['Current Station']).strip():
-                        cur_stn = str(row['Current Station']).strip()
-                        cur_norm = cur_stn.lower()
+                        cur_stn_raw = str(row['Current Station']).strip()
+                        cur_norm = cur_stn_raw.lower()
+                        if 'hindu coll' in cur_norm:
+                            cur_norm = 'hindu college'
                         seq = station_seq_map.get(cur_norm, station_code_map.get(cur_norm, 1))
+                        cur_stn = stn_df.loc[stn_df['sequence'] == seq, 'station_code'].values[0] if not stn_df.empty else "MASS"
                     else:
                         assigned_seq = 1 + (idx % 20)
                         cur_stn = stn_df.loc[stn_df['sequence'] == assigned_seq, 'station_code'].values[0] if not stn_df.empty else "MASS"
                         seq = assigned_seq
 
-                    if seq >= 21:
+                    if seq >= 20:
                         next_code = "TRL"
-                        prev_code = stn_df.loc[stn_df['sequence'] == 20, 'station_code'].values[0] if not stn_df.empty else "PUT"
+                        prev_code = stn_df.loc[stn_df['sequence'] == 19, 'station_code'].values[0] if not stn_df.empty else "PUT"
                     elif seq <= 1:
                         next_code = stn_df.loc[stn_df['sequence'] == 2, 'station_code'].values[0] if not stn_df.empty else "BBQ"
                         prev_code = "MASS"

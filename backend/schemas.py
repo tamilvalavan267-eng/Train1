@@ -176,3 +176,47 @@ class ScenarioSimulationResponse(BaseModel):
 class TrainSpeedUpdateRequest(BaseModel):
     speed: float = Field(ge=0.0, le=120.0, description="Train speed in km/h (0 to 120)")
     reason: Optional[str] = Field(default=None, description="Optional operational reason for manual speed regulation")
+
+
+class BookTicketRequestSchema(BaseModel):
+    train_number: int
+    from_station: str
+    to_station: str
+    journey_date: Optional[str] = None
+    passenger_name: Optional[str] = "Alex Commuter"
+    passenger_age: Optional[int] = 28
+    passenger_gender: Optional[str] = "Male"
+    passenger_count: Optional[int] = 1
+    ticket_class: Optional[str] = "Second Class (II)"
+    journey_type: Optional[str] = "Single Journey"
+
+
+class BookedTicketResponseSchema(BaseModel):
+    success: bool
+    ticket_id: str
+    pnr_number: str
+    train_number: int
+    train_name: str
+    train_type: str
+    from_station_code: str
+    from_station_name: str
+    to_station_code: str
+    to_station_name: str
+    journey_date: str
+    departure_time: str
+    arrival_time: str
+    ai_predicted_eta: str
+    platform: int
+    distance_km: float
+    passenger_name: str
+    passenger_age: int
+    passenger_gender: str
+    passenger_count: int
+    ticket_class: str
+    journey_type: str
+    fare_amount: float
+    status: str
+    booked_at: str
+    valid_until: str
+    qr_code_data: str
+

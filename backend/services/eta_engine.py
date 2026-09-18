@@ -23,7 +23,7 @@ def calculate_train_dynamic_eta(
     current_delay: float,
     scheduled_arrival_str: str,
     train_type: str = "EMU Local",
-    destination_seq: int = 21
+    destination_seq: int = 20
 ) -> Dict[str, Any]:
     """
     Computes complete AI ETA intelligence for a train.

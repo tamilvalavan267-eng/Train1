@@ -13,8 +13,8 @@ AUTHORISED_ENGINEERING_WORKS = [
         "section": "Villivakkam - Korattur (Up & Down Slow)",
         "start_station": "Villivakkam",
         "end_station": "Korattur",
-        "start_seq": 7,
-        "end_seq": 8,
+        "start_seq": 6,
+        "end_seq": 7,
         "work_type": "Track Renewal & Deep Screening (BCM Machine)",
         "status": "Active",  # Active, Planned, Major restriction, Completed
         "start_time": "08:30 IST",
@@ -33,8 +33,8 @@ AUTHORISED_ENGINEERING_WORKS = [
         "section": "Veppampattu - Sevvapet Road (Bridge No. 42)",
         "start_station": "Veppampattu",
         "end_station": "Sevvapet Road",
-        "start_seq": 18,
-        "end_seq": 19,
+        "start_seq": 17,
+        "end_seq": 18,
         "work_type": "Bridge Girders Inspection & Regirdering Pre-Work",
         "status": "Major restriction",
         "start_time": "06:00 IST",
@@ -53,8 +53,8 @@ AUTHORISED_ENGINEERING_WORKS = [
         "section": "Avadi Yard (Platform 3 & 4 Crossover)",
         "start_station": "Avadi",
         "end_station": "Hindu College",
-        "start_seq": 13,
-        "end_seq": 14,
+        "start_seq": 12,
+        "end_seq": 13,
         "work_type": "Point Machine Overhaul & Signaling Cable Maintenance",
         "status": "Planned",
         "start_time": "23:00 IST",
@@ -76,7 +76,7 @@ def get_all_construction_works() -> List[Dict[str, Any]]:
     return AUTHORISED_ENGINEERING_WORKS
 
 
-def check_train_construction_impact(current_station_seq: int, destination_seq: int = 21) -> Dict[str, Any]:
+def check_train_construction_impact(current_station_seq: int, destination_seq: int = 20) -> Dict[str, Any]:
     """
     Section 9 Compliance: Route Matching
     Only triggers construction delay if the train has NOT YET passed the affected section.
