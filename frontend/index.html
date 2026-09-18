@@ -989,6 +989,33 @@
             </div>
           </div>
 
+          <!-- Train Speed Regulation & Live Override Control -->
+          <div class="card" style="background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); border-left: 4px solid #0284C7; margin-bottom: 24px;">
+            <div class="card-header" style="border-bottom: 1px solid #BAE6FD; padding-bottom: 8px;">
+              <div class="card-title" style="color: #0369A1; font-size: 14px;">
+                <i class="fa-solid fa-gauge-high"></i> Operational Speed Regulation & Control
+              </div>
+              <span class="badge-tag" style="background: #E0F2FE; color: #0284C7; border: 1px solid #7DD3FC;">LIVE SPEED TELEMETRY</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-top: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px;">
+                <label for="detail-speed-slider" style="font-size: 13px; font-weight: 600; color: #0F172A; white-space: nowrap;">Regulate Speed:</label>
+                <input type="range" id="detail-speed-slider" min="0" max="90" step="0.5" value="45" style="flex: 1; accent-color: #0284C7;">
+                <span id="detail-speed-slider-val" style="font-weight: 800; font-size: 15px; color: #0369A1; min-width: 80px;">45.0 km/h</span>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button class="btn btn-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="applyPresetSpeed(0, 'Signal Halt')">Halt (0k)</button>
+                <button class="btn btn-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="applyPresetSpeed(20, 'TSR Caution')">TSR (20k)</button>
+                <button class="btn btn-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="applyPresetSpeed(35, 'Weather Caution')">Caution (35k)</button>
+                <button class="btn btn-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="applyPresetSpeed(55, 'Normal Suburban Run')">Cruising (55k)</button>
+                <button class="btn btn-primary" id="btn-apply-train-speed" style="font-size: 12px; padding: 5px 14px; background: #0284C7;">
+                  <i class="fa-solid fa-check"></i> Update Speed
+                </button>
+              </div>
+            </div>
+            <div id="detail-speed-feedback" style="font-size: 12px; color: #0369A1; margin-top: 8px; font-weight: 600; display: none;"></div>
+          </div>
+
           <!-- Route & Multi-Factor Conditions Breakdown -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
             <div class="card" style="margin-bottom: 0;">

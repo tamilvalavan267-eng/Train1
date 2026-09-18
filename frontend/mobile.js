@@ -415,7 +415,7 @@ function renderSearchResultsList(trainList) {
         ` : ''}
 
         <div class="fc-card-footer">
-          <span class="fc-footer-item"><i class="fa-solid fa-gauge"></i> ${t.current_speed || '45'} km/h</span>
+          <span class="fc-footer-item"><i class="fa-solid fa-gauge"></i> ${t.current_speed !== undefined ? t.current_speed : '48'} km/h</span>
           <span class="fc-footer-item" style="color: #2563EB; font-weight: 700;">Track Live Journey &rarr;</span>
         </div>
       </div>
@@ -438,7 +438,7 @@ function setupFrequentCommutes() {
       arr: '07:55 AM',
       eta: '07:55 AM',
       pf: 'PF 13',
-      speed: '45 km/h',
+      speed: '47.2 km/h',
       status: 'On Time',
       delayReason: '',
       isDelayed: false,
@@ -453,7 +453,7 @@ function setupFrequentCommutes() {
       arr: '08:12 AM',
       eta: '08:18 AM',
       pf: 'PF 12',
-      speed: '28 km/h',
+      speed: '27.4 km/h',
       status: '+6 min (Signal)',
       delayReason: 'Signal Clearance Delay at Basin Bridge Jn',
       isDelayed: true,
@@ -468,7 +468,7 @@ function setupFrequentCommutes() {
       arr: '08:15 AM',
       eta: '08:15 AM',
       pf: 'PF 14',
-      speed: '55 km/h',
+      speed: '63.8 km/h',
       status: 'On Time',
       delayReason: '',
       isDelayed: false,
@@ -485,7 +485,7 @@ function setupFrequentCommutes() {
         return {
           ...c,
           eta: match.ai_predicted_eta || c.eta,
-          speed: `${match.current_speed || 45} km/h`,
+          speed: `${match.current_speed !== undefined ? match.current_speed : 48} km/h`,
           pf: `PF ${match.platform || 1}`,
           isDelayed: delayed,
           tag: delayed ? `+${match.current_delay} min Delay` : c.tag,
@@ -693,7 +693,7 @@ window.openTrainJourneySheet = function(trainNumber) {
       impactSignal.innerHTML = `<i class="fa-solid fa-traffic-light"></i> Signal: ${train && train.signal_status ? train.signal_status.split('•')[0] : 'Warning'}`;
     }
     if (impactSpeed) {
-      impactSpeed.innerHTML = `<i class="fa-solid fa-gauge"></i> Speed: ${train && train.current_speed ? train.current_speed : 28} km/h`;
+      impactSpeed.innerHTML = `<i class="fa-solid fa-gauge"></i> Speed: ${train && train.current_speed !== undefined ? train.current_speed : 48} km/h`;
     }
     if (impactWeather) {
       impactWeather.innerHTML = `<i class="fa-solid fa-cloud"></i> Weather: ${train && train.weather_condition ? train.weather_condition : 'Optimal'}`;
@@ -943,7 +943,7 @@ function renderMobileLiveStatus() {
             Currently near: <b>${t.current_station || 'MMC'}</b> ➔ Next: <b>${t.next_station || 'TRL'}</b>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:11px; color:#64748B; margin-top:4px;">
-            <span>Speed: ${t.current_speed || 45} km/h</span>
+            <span>Speed: ${t.current_speed !== undefined ? t.current_speed : 48} km/h</span>
             <span>Platform: ${t.platform || 1}</span>
             <span style="color:#2563EB; font-weight:700;">Dynamic ETA: ${t.ai_predicted_eta || t.scheduled_arrival}</span>
           </div>
@@ -1033,11 +1033,11 @@ window.selectPresetTime = function(label) {
 // Fallback demo trains generator if backend data is loading
 function generateDemoTrains() {
   return [
-    { train_number: 43209, train_name: "MMC-TRL EMU LOCAL", train_type: "EMU Local", scheduled_departure: "06:40 AM", scheduled_arrival: "07:55 AM", ai_predicted_eta: "07:55 AM", current_delay: 0, platform: 13, current_speed: 45, delay_reason: "On Time", current_station: "MMC", station_sequence: 1 },
-    { train_number: 43205, train_name: "MMC-TRL MEMU FAST", train_type: "Fast Local", scheduled_departure: "06:55 AM", scheduled_arrival: "08:12 AM", ai_predicted_eta: "08:18 AM", current_delay: 6, platform: 12, current_speed: 28, delay_reason: "Signal Clearance Delay at Basin Bridge Jn", current_station: "BBQ", station_sequence: 2 },
-    { train_number: 43425, train_name: "MASS-AJJ FAST LOCAL", train_type: "Fast Local", scheduled_departure: "17:45", scheduled_arrival: "18:32", ai_predicted_eta: "18:46:30", current_delay: 6, platform: 1, current_speed: 28, delay_reason: "Signal issue", delay_description: "Signal problem near Avadi is causing operational delay.", current_station: "Avadi", station_sequence: 13 },
-    { train_number: 43217, train_name: "MMC-TRL FAST LOCAL", train_type: "Fast Local", scheduled_departure: "07:10 AM", scheduled_arrival: "08:15 AM", ai_predicted_eta: "08:15 AM", current_delay: 0, platform: 14, current_speed: 52, delay_reason: "On Time", current_station: "MMC", station_sequence: 1 },
-    { train_number: 43221, train_name: "MMC-TRL EMU LOCAL", train_type: "EMU Local", scheduled_departure: "07:25 AM", scheduled_arrival: "08:40 AM", ai_predicted_eta: "08:43 AM", current_delay: 3, platform: 13, current_speed: 40, delay_reason: "Slow speed over TSR section", current_station: "VLK", station_sequence: 7 }
+    { train_number: 43209, train_name: "MMC-TRL EMU LOCAL", train_type: "EMU Local", scheduled_departure: "06:40 AM", scheduled_arrival: "07:55 AM", ai_predicted_eta: "07:55 AM", current_delay: 0, platform: 13, current_speed: 47.2, delay_reason: "On Time", current_station: "MMC", station_sequence: 1 },
+    { train_number: 43205, train_name: "MMC-TRL MEMU FAST", train_type: "Fast Local", scheduled_departure: "06:55 AM", scheduled_arrival: "08:12 AM", ai_predicted_eta: "08:18 AM", current_delay: 6, platform: 12, current_speed: 27.4, delay_reason: "Signal Clearance Delay at Basin Bridge Jn", current_station: "BBQ", station_sequence: 2 },
+    { train_number: 43425, train_name: "MASS-AJJ FAST LOCAL", train_type: "Fast Local", scheduled_departure: "17:45", scheduled_arrival: "18:32", ai_predicted_eta: "18:46:30", current_delay: 6, platform: 1, current_speed: 68.2, delay_reason: "Signal issue", delay_description: "Signal problem near Avadi is causing operational delay.", current_station: "Avadi", station_sequence: 13 },
+    { train_number: 43217, train_name: "MMC-TRL FAST LOCAL", train_type: "Fast Local", scheduled_departure: "07:10 AM", scheduled_arrival: "08:15 AM", ai_predicted_eta: "08:15 AM", current_delay: 0, platform: 14, current_speed: 63.8, delay_reason: "On Time", current_station: "MMC", station_sequence: 1 },
+    { train_number: 43221, train_name: "MMC-TRL EMU LOCAL", train_type: "EMU Local", scheduled_departure: "07:25 AM", scheduled_arrival: "08:40 AM", ai_predicted_eta: "08:43 AM", current_delay: 3, platform: 13, current_speed: 38.6, delay_reason: "Slow speed over TSR section", current_station: "VLK", station_sequence: 7 }
   ];
 }
 

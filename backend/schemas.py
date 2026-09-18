@@ -171,3 +171,8 @@ class ScenarioSimulationResponse(BaseModel):
     prediction_range: str
     explanation: List[AIFactorExplanation]
     impact_summary: str
+
+
+class TrainSpeedUpdateRequest(BaseModel):
+    speed: float = Field(ge=0.0, le=120.0, description="Train speed in km/h (0 to 120)")
+    reason: Optional[str] = Field(default=None, description="Optional operational reason for manual speed regulation")

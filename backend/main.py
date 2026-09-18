@@ -21,7 +21,7 @@ from backend.services.weather_service import fetch_all_stations_weather, get_wea
 from backend.services.signal_service import get_all_signals, update_signal_condition
 from backend.services.construction_service import get_all_construction_works
 from backend.services.eta_engine import calculate_train_dynamic_eta
-from backend.schemas import ScenarioSimulationRequest, ScenarioSimulationResponse
+from backend.schemas import ScenarioSimulationRequest, ScenarioSimulationResponse, TrainSpeedUpdateRequest
 from ml.predict import predict_delay
 
 # Initialize FastAPI App
@@ -54,6 +54,69 @@ _TRAINS_CACHE: Dict[int, Dict[str, Any]] = {}
 _STATION_COORDINATES: List[Dict[str, Any]] = []
 
 
+def compute_distinct_train_speed(
+    train_number: int,
+    train_name: str,
+    station_sequence: int,
+    delay_reason: str,
+    delay_minutes: float,
+    used_speeds: set
+) -> float:
+    """
+    Computes a realistic, unique, individualized operational speed (km/h) for each train.
+    Differentiates by train type (Fast, EMU Local, MEMU, Passenger) and operational caution orders
+    (TSR/Track Work, Signal Caution/Halt, Weather Caution, Normal Corridors).
+    """
+    t_name_upper = train_name.upper()
+    if "FAST" in t_name_upper:
+        train_type = "Fast Local"
+        base_speed = 65.0
+    elif "MEMU" in t_name_upper:
+        train_type = "MEMU"
+        base_speed = 56.0
+    elif "PASS" in t_name_upper:
+        train_type = "Passenger"
+        base_speed = 47.0
+    else:
+        train_type = "EMU Local"
+        base_speed = 50.0
+
+    # Deterministic variation spread based on train number
+    var = (((train_number * 17) % 31) - 15) * 0.4
+    speed = base_speed + var
+
+    # Caution and operational state adjustments
+    if "Track Work" in delay_reason or "TSR" in delay_reason:
+        # Enforce TSR caution speed (21.0 - 29.5 km/h)
+        speed = 21.0 + ((train_number % 11) * 0.8)
+    elif "Signal" in delay_reason:
+        # For critical delays, a train may be held stationary at a red home signal
+        if delay_minutes >= 16.0 and (train_number % 4 == 0):
+            speed = 0.0
+        else:
+            # Restrictive yellow aspect caution run (14.5 - 23.5 km/h)
+            speed = 14.5 + ((train_number % 13) * 0.7)
+    elif "Weather" in delay_reason:
+        # Wet tracks / traction caution (32.5 - 41.5 km/h)
+        speed = 32.5 + ((train_number % 9) * 1.0)
+    elif delay_minutes > 0:
+        # Standard congestion cushion
+        speed = max(28.0, speed - min(10.0, delay_minutes * 0.5))
+
+    candidate = round(speed, 1)
+
+    # Ensure 100% distinct speeds across all trains
+    step = 0.3
+    while candidate in used_speeds:
+        candidate = round(candidate + step, 1)
+        if candidate > 85.0:
+            step = -0.3
+            candidate = round(base_speed + step, 1)
+
+    used_speeds.add(candidate)
+    return candidate
+
+
 def load_initial_train_data():
     """Ingests trains and stations from data files."""
     global _TRAINS_CACHE, _STATION_COORDINATES
@@ -70,35 +133,50 @@ def load_initial_train_data():
     excel_path = os.path.join(base_dir, 'data', 'MASS_to_TRL_All_Local_Trains.xlsx')
     trains_df = pd.read_excel(excel_path, sheet_name='Train Schedule')
 
+    used_speeds = set()
+
     for idx, row in trains_df.iterrows():
         t_no = int(row['Train Number'])
         t_name = str(row['Train Name']).strip()
         dep = str(row['Departure ']).strip()
         arr = str(row['Arrival']).strip()
         status = str(row['Status']).strip()
-        cur_stn = str(row['Current Station']).strip() if pd.notna(row['Current Station']) else "MASS"
         delay = float(row['Delay Minutes']) if pd.notna(row['Delay Minutes']) else 0.0
         platform = int(row['Platform']) if pd.notna(row['Platform']) else (1 if idx % 2 == 0 else 2)
         reason = str(row['Delay Reason']).strip() if pd.notna(row['Delay Reason']) else ("On Time" if delay == 0 else "Operational Congestion")
         desc = str(row['Delay Description']).strip() if pd.notna(row['Delay Description']) else ""
 
-        # Determine station sequence
-        cur_norm = cur_stn.lower()
-        seq = station_seq_map.get(cur_norm, station_code_map.get(cur_norm, 1))
-
-        # Speed and next station estimation
-        if seq == 1:
-            speed = 0.0
-            next_code = "BBQ"
-            prev_code = "MASS"
-        elif seq >= 21:
-            speed = 0.0
-            next_code = "TRL"
-            prev_code = "PUT"
+        # Determine station sequence: retain verified stations or distribute active timetable services along corridor
+        if pd.notna(row['Current Station']) and str(row['Current Station']).strip():
+            cur_stn = str(row['Current Station']).strip()
+            cur_norm = cur_stn.lower()
+            seq = station_seq_map.get(cur_norm, station_code_map.get(cur_norm, 1))
         else:
-            speed = 0.0 if "Signal" in reason else (45.0 if delay < 5.0 else 28.0)
+            # Distribute active scheduled runs across corridor stations 1 to 20
+            assigned_seq = 1 + (idx % 20)
+            cur_stn = stn_df.loc[stn_df['sequence'] == assigned_seq, 'station_code'].values[0]
+            seq = assigned_seq
+
+        # Sequence-aware next and previous stations
+        if seq >= 21:
+            next_code = "TRL"
+            prev_code = stn_df.loc[stn_df['sequence'] == 20, 'station_code'].values[0]
+        elif seq <= 1:
+            next_code = stn_df.loc[stn_df['sequence'] == 2, 'station_code'].values[0]
+            prev_code = "MASS"
+        else:
             next_code = stn_df.loc[stn_df['sequence'] == seq + 1, 'station_code'].values[0]
             prev_code = stn_df.loc[stn_df['sequence'] == seq - 1, 'station_code'].values[0]
+
+        # Compute individual distinct speed
+        speed = compute_distinct_train_speed(
+            train_number=t_no,
+            train_name=t_name,
+            station_sequence=seq,
+            delay_reason=reason,
+            delay_minutes=delay,
+            used_speeds=used_speeds
+        )
 
         t_type = "EMU Local" if "LOCAL" in t_name.upper() else ("MEMU" if "MEMU" in t_name.upper() else "Fast Local")
 
@@ -263,6 +341,67 @@ def get_train_conditions(train_number: int):
         "weather_impact": train["weather_impact"],
         "data_status": train["data_status"]
     }
+
+
+@app.post("/trains/{train_number}/speed")
+@app.put("/trains/{train_number}/speed")
+async def update_train_speed(train_number: int, req: TrainSpeedUpdateRequest):
+    """
+    Dynamically regulates a train's speed, recalculates dynamic AI ETA,
+    and broadcasts the updated speed and telemetry to connected clients.
+    """
+    if not _TRAINS_CACHE:
+        load_initial_train_data()
+    train = _TRAINS_CACHE.get(train_number)
+    if not train:
+        raise HTTPException(status_code=404, detail="Train not found")
+
+    new_speed = round(float(req.speed), 1)
+    train["current_speed"] = new_speed
+    if req.reason:
+        train["delay_reason"] = req.reason
+
+    # Recalculate dynamic AI ETA with updated speed
+    ai_eta_pack = calculate_train_dynamic_eta(
+        train_number=train["train_number"],
+        train_name=train["train_name"],
+        current_station_code=train["current_station"],
+        next_station_code=train["next_station"],
+        current_station_seq=train["station_sequence"],
+        current_speed=new_speed,
+        current_delay=train["current_delay"],
+        scheduled_arrival_str=train["scheduled_arrival"],
+        train_type=train["train_type"],
+        destination_seq=21
+    )
+
+    train["ai_predicted_eta"] = ai_eta_pack["dynamic_ai_eta"]
+    train["predicted_additional_delay"] = ai_eta_pack["predicted_additional_delay"]
+    train["prediction_range"] = ai_eta_pack["prediction_range"]
+    train["risk_level"] = ai_eta_pack["risk_level"]
+    train["station_wise_eta"] = ai_eta_pack["station_wise_eta"]
+    train["ai_explanations"] = ai_eta_pack["ai_explanations"]
+    train["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S IST")
+
+    # Broadcast update to connected WebSockets
+    await manager.broadcast({
+        "type": "TRAIN_SPEED_UPDATED",
+        "train_number": train_number,
+        "current_speed": new_speed,
+        "ai_predicted_eta": train["ai_predicted_eta"],
+        "predicted_additional_delay": train["predicted_additional_delay"],
+        "risk_level": train["risk_level"]
+    })
+
+    # Persist in SQLite database
+    try:
+        from backend.database import SessionLocal, update_train_speed_db
+        with SessionLocal() as db_session:
+            update_train_speed_db(db_session, train_number, new_speed, req.reason)
+    except Exception as e:
+        print(f"DB speed update sync note: {e}")
+
+    return train
 
 
 @app.get("/weather")

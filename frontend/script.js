@@ -111,6 +111,19 @@ function initWebSocket() {
         const msg = JSON.parse(event.data);
         if (msg.type === 'INITIAL_STATE') {
           console.log('WebSocket initial handshake complete.');
+        } else if (msg.type === 'TRAIN_SPEED_UPDATED') {
+          const t = state.trains.find(x => x.train_number === msg.train_number);
+          if (t) {
+            t.current_speed = msg.current_speed;
+            t.ai_predicted_eta = msg.ai_predicted_eta;
+            t.predicted_additional_delay = msg.predicted_additional_delay;
+            t.risk_level = msg.risk_level;
+            renderAllTrainsTable();
+            const curInsp = parseInt(document.getElementById('detail-train-selector')?.value);
+            if (curInsp === msg.train_number) {
+              renderTrainDetails(curInsp);
+            }
+          }
         }
       } catch (e) {}
     };
@@ -394,7 +407,11 @@ function renderAllTrainsTable() {
           <div style="font-size: 10px; color: #15803D; margin-top: 2px;">Normal</div>
         `}
       </td>
-      <td>${t.current_speed} km/h</td>
+      <td>
+        <span class="speed-pill ${t.current_speed > 60 ? 'speed-fast' : (t.current_speed >= 40 ? 'speed-norm' : (t.current_speed > 0 ? 'speed-caution' : 'speed-halt'))}">
+          <i class="fa-solid fa-gauge" style="font-size: 10px;"></i> ${t.current_speed} km/h
+        </span>
+      </td>
       <td><small>${t.signal_status.split('•')[0]}</small></td>
       <td><small>${t.speed_restriction > 0 ? `TSR ${t.speed_restriction}k` : 'None'}</small></td>
       <td class="eta-cell">${t.ai_predicted_eta}</td>
@@ -530,7 +547,85 @@ function renderTrainDetails(trainNumber) {
       </div>
     `).join('');
   }
+
+  // Sync Speed Regulation Slider
+  const speedSlider = document.getElementById('detail-speed-slider');
+  const speedVal = document.getElementById('detail-speed-slider-val');
+  if (speedSlider && speedVal) {
+    speedSlider.value = train.current_speed !== undefined ? train.current_speed : 45;
+    speedVal.textContent = `${Number(speedSlider.value).toFixed(1)} km/h`;
+  }
 }
+
+// ==========================================
+// SPEED REGULATION CONTROLLER FUNCTIONS
+// ==========================================
+
+window.applyPresetSpeed = function(val, reason) {
+  const slider = document.getElementById('detail-speed-slider');
+  const sliderVal = document.getElementById('detail-speed-slider-val');
+  if (slider) slider.value = val;
+  if (sliderVal) sliderVal.textContent = `${Number(val).toFixed(1)} km/h`;
+  submitTrainSpeedUpdate(val, reason);
+};
+
+window.submitTrainSpeedUpdate = async function(speed, reason = null) {
+  const selector = document.getElementById('detail-train-selector');
+  const trainNumber = selector ? parseInt(selector.value) : null;
+  if (!trainNumber) return;
+
+  const feedback = document.getElementById('detail-speed-feedback');
+  if (feedback) {
+    feedback.style.display = 'block';
+    feedback.style.color = '#0284C7';
+    feedback.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Regulating speed to ${speed} km/h and recalculating dynamic AI ETA...`;
+  }
+
+  try {
+    const res = await fetch(`/trains/${trainNumber}/speed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speed: parseFloat(speed), reason: reason })
+    });
+    if (!res.ok) throw new Error(`Server returned status ${res.status}`);
+    const updated = await res.json();
+
+    // Update local state
+    const idx = state.trains.findIndex(t => t.train_number === trainNumber);
+    if (idx !== -1) {
+      state.trains[idx] = updated;
+    }
+
+    renderTrainDetails(trainNumber);
+    renderAllTrainsTable();
+    updateDashboardKPIs();
+
+    if (feedback) {
+      feedback.style.display = 'block';
+      feedback.style.color = '#15803D';
+      feedback.innerHTML = `<i class="fa-solid fa-circle-check"></i> Operational speed updated to <b>${updated.current_speed} km/h</b>. Dynamic AI ETA: <b>${updated.ai_predicted_eta}</b>`;
+      setTimeout(() => { feedback.style.display = 'none'; }, 5000);
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.style.display = 'block';
+      feedback.style.color = '#B91C1C';
+      feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Speed update failed: ${err.message}`;
+    }
+  }
+};
+
+document.getElementById('detail-speed-slider')?.addEventListener('input', (e) => {
+  const valEl = document.getElementById('detail-speed-slider-val');
+  if (valEl) valEl.textContent = `${parseFloat(e.target.value).toFixed(1)} km/h`;
+});
+
+document.getElementById('btn-apply-train-speed')?.addEventListener('click', () => {
+  const slider = document.getElementById('detail-speed-slider');
+  if (slider) {
+    submitTrainSpeedUpdate(slider.value);
+  }
+});
 
 // ==========================================
 // 7. VIEW 4: STATION-WISE ETA
